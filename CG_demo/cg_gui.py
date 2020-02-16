@@ -60,8 +60,9 @@ class MyCanvas(QGraphicsView):
         self.updateScene([self.sceneRect()])
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        x = int(event.localPos().x())
-        y = int(event.localPos().y())
+        pos = self.mapToScene(event.localPos().toPoint())
+        x = int(pos.x())
+        y = int(pos.y())
         if self.status == 'line':
             self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], self.temp_algorithm)
             self.scene().addItem(self.temp_item)
@@ -69,8 +70,9 @@ class MyCanvas(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        x = int(event.localPos().x())
-        y = int(event.localPos().y())
+        pos = self.mapToScene(event.localPos().toPoint())
+        x = int(pos.x())
+        y = int(pos.y())
         if self.status == 'line':
             self.temp_item.p_list[1] = [x, y]
         self.updateScene([self.sceneRect()])
