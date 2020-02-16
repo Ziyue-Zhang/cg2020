@@ -5,7 +5,7 @@
 
 - 截止时间：
     
-> 提交日的**`23:00`**
+> 提交日的 **`23:00`**
     
 - 提交方式：
     
@@ -44,24 +44,28 @@
 使用[Python3](https://www.python.org)语言编程，实现一个绘图系统
 
 ### 2.1. 要实现的内容
-- 核心算法模块（各种图元的生成、编辑算法）：`cg_algorithms.py`
-    > - 只允许依赖`math`库
+- 核心算法模块（各种图元的生成、编辑算法）：cg_algorithms.py
+    > - 只允许依赖math库
     > - 参考[CG_demo/cg_algorithms.py](CG_demo/cg_algorithms.py)
-- 命令行界面（CLI）程序：`cg_cli.py`
+- 命令行界面（CLI）程序：cg_cli.py
     > - 读取包含了图元绘制指令序列的文本文件，依据指令调用核心算法模块中的算法绘制图形以及保存图像
-    > - 允许依赖第三方库[`numpy`](https://pypi.org/project/numpy/)和[`Pillow`](https://pypi.org/project/Pillow/)，用于将画布保存为图像
+    > - 允许依赖第三方库[numpy](https://pypi.org/project/numpy/)和[Pillow](https://pypi.org/project/Pillow/)，用于将画布保存为图像
     > - 程序接受两个外部参数：指令文件的路径和图像保存目录
     > - 测试程序时的指令格式如下：
     >    
-    >    >`python cg_cli.py input_path output_dir`
+    >    >```
+    >    >python cg_cli.py input_path output_dir
+    >    >```
     > - 参考[CG_demo/cg_cli.py](CG_demo/cg_cli.py)
-- 用户交互界面（GUI）程序：`cg_gui.py`
+- 用户交互界面（GUI）程序：cg_gui.py
     > - 以鼠标交互的方式，通过鼠标事件获取所需参数并调用核心算法模块中的算法将图元绘制到屏幕上，或对图元进行编辑
     > - 界面样式和交互方式不做限制，可自由设计
-    > - 可自由选择GUI库，如[`PyQt5`](https://pypi.org/project/PyQt5/)、`Tkinter`等
+    > - 可自由选择GUI库，如[PyQt5](https://pypi.org/project/PyQt5/)、Tkinter等
     > - 测试程序时的指令格式如下：
     >    
-    >    >`pythonw cg_gui.py`
+    >    >```
+    >    >pythonw cg_gui.py
+    >    >```
     > - 参考[CG_demo/cg_gui.py](CG_demo/cg_gui.py)
 
 [CG_demo](CG_demo)仅提供了一种简单的系统架构及交互逻辑，可以直接在此基础上丰富、优化功能；也可以另起炉灶，设计更优秀的系统架构和交互方式
@@ -208,5 +212,16 @@
     > ```
     > ffmpeg -i input.mov -b:v 4000k output.mp4
     > ```
-    > 也可自行探索更合适的压制参数，或者使用其他压制工具
+    也可自行探索更合适的压制参数，或者使用其他压制工具
 - 前两次进度报告`不要`提交视频文件
+
+## 6. 测试环境说明
+测试环境为[VirtualBox](https://www.virtualbox.org/wiki/Downloads)虚拟机：
+- [Ubuntu 18.04 x86_64](https://ubuntu.com)
+- [Python 3.7.4](https://www.python.org)
+    - [numpy 1.18.1](https://pypi.org/project/numpy/)
+    - [pillow 7.0.0](https://pypi.org/project/Pillow/)
+    - [pyqt 5.9.2](https://pypi.org/project/PyQt5/)
+
+## 7. 开发环境配置
+不必和测试环境完全一致，python和python库的小版本不同一般不会影响程序运行
