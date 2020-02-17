@@ -65,7 +65,7 @@
     > - 测试程序时的指令格式如下：
     >   
     >    >```
-    >    >pythonw cg_gui.py
+    >    >python cg_gui.py
     >    >```
     > - 参考[CG_demo/cg_gui.py](CG_demo/cg_gui.py)
 
