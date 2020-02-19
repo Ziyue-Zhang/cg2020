@@ -258,5 +258,5 @@ IDE/编辑器选择：
     > 按时提交进度报告能够提升评分时的宽容度
 
 ## 更新记录
-- \[2020/02/19 10:20\] 更新[2.2节](#22-指令文件格式)说明，详情见[Commit 6dc66448](https://https://git.nju.edu.cn/songyc/cg2020a/commit/6dc66448b9a74865b8409d6686cd48a8a724458d?view=parallel&w=1.nju.edu.cn/songyc/cg2020a/commits/master)
+- \[2020/02/19 10:20\] 更新[2.2节](#22-指令文件格式)说明，详情见[Commit 6dc66448](https://git.nju.edu.cn/songyc/cg2020a/commit/6dc66448b9a74865b8409d6686cd48a8a724458d?view=parallel&w=1.nju.edu.cn/songyc/cg2020a/commits/master)
 - \[2020/02/17 15:30\] 更新测试环境下载地址
