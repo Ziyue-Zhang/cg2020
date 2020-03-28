@@ -257,9 +257,116 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1]]) 裁剪后线段的起点和终点坐标
     """
     result = []
-    result = p_list
     if algorithm == 'Cohen-Sutherland':
-        pass
+        x0,y0 = p_list[0]
+        x1,y1 = p_list[1]
+        code1=0
+        code2=0
+        if(x0<x_min):
+            code1+=1
+        if(x0>x_max):
+            code1+=2
+        if(y0<y_min):
+            code1+=4
+        if(y0>y_max):
+            code1+=8
+        if(x1<x_min):
+            code2+=1
+        if(x1>x_max):
+            code2+=2
+        if(y1<y_min):
+            code2+=4
+        if(y1>y_max):
+            code2+=8
+
+        if((code1|code2)==0):
+            result=p_list
+        elif((code1&code2)!=0):
+            result=[[0,0],[0,0]]
+        else:
+            code=code1|code2
+            if(code&1):
+                yy=int(float((x_min-x1)*(y0-y1)/(x0-x1))+float(y1)+0.5)
+                if(x0<x_min):
+                    x0=x_min
+                    y0=yy
+                elif(x1<x_min):
+                    x1=x_min
+                    y1=yy
+            if(code&2):
+                yy=int(float((x_max-x1)*(y0-y1)/(x0-x1))+float(y1)+0.5)
+                if(x0>x_max):
+                    x0=x_max
+                    y0=yy
+                elif(x1>x_max):
+                    x1=x_max
+                    y1=yy
+            if(code&4):
+                xx=int(float((y_min-y1)*(x0-x1)/(y0-y1))+float(x1)+0.5)
+                if(y0<y_min):
+                    x0=xx
+                    y0=y_min
+                elif(y1<y_min):
+                    x1=xx
+                    y1=y_min
+            if(code&8):
+                xx=int(float((y_max-y1)*(x0-x1)/(y0-y1))+float(x1)+0.5)
+                if(y0>y_max):
+                    x0=xx
+                    y0=y_max
+                elif(y1>y_max):
+                    x1=xx
+                    y1=y_max
+            code1=0
+            code2=0
+            if(x0<x_min):
+                code1+=1
+            if(x0>x_max):
+                code1+=2
+            if(y0<y_min):
+                code1+=4
+            if(y0>y_max):
+                code1+=8
+            if(x1<x_min):
+                code2+=1
+            if(x1>x_max):
+                code2+=2
+            if(y1<y_min):
+                code2+=4
+            if(y1>y_max):
+                code2+=8
+            if((code1|code2)==0):
+                result=[[x0,y0], [x1,y1]]
+            else:
+                result=[[0,0],[0,0]]
+
     elif algorithm == 'Liang-Barsky':
-        pass
+        x0,y0 = p_list[0]
+        x1,y1 = p_list[1]
+        p=[x0-x1,x1-x0,y0-y1,y1-y0]
+        q=[x0-x_min,x_max-x0,y0-y_min,y_max-y0]
+        u1=float(0)
+        u2=float(1)
+        flag=False
+        for i in range(0,4):
+            if(p[i]==0 and q[i]<0):
+                flag=True
+            else:
+                if(p[i]==0):
+                    continue
+                r=float(q[i]/p[i])
+                if(p[i]<0):
+                    u1=max(u1,r)
+                else:
+                    u2=min(u2,r)
+                if(u1>u2):
+                    flag=True
+        if(flag==False):
+            xx0=int(x0+u1*(x1-x0)+0.5)
+            yy0=int(y0+u1*(y1-y0)+0.5)
+            xx1=int(x0+u2*(x1-x0)+0.5)
+            yy1=int(y0+u2*(y1-y0)+0.5)
+            result=[[xx0,yy0],[xx1,yy1]]
+        else:
+            result=[[0,0],[0,0]]
     return result
