@@ -101,7 +101,7 @@ if __name__ == '__main__':
                 item_id = line[1]
                 x = int(line[2])
                 y = int(line[3])
-                s = int(line[4])
+                s = float(line[4])
                 item_type, p_list, algorithm, color = item_dict[item_id]
                 p_list = alg.scale(p_list, x, y, s)
                 item_dict[item_id] = item_type, p_list, algorithm, color
