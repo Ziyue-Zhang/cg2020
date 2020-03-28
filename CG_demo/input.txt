@@ -1,7 +1,13 @@
 resetCanvas 600 500
 setColor 0 255 0
-drawLine line1 100 50 500 200 Naive
+drawLine line1 100 50 500 200 Bresenham
 saveCanvas 1
 setColor 255 0 0
-drawLine 666 200 300 400 150 Naive
+drawLine 666 200 300 400 150 Bresenham
 saveCanvas 2
+setColor 0 0 255
+drawLine nmsl 150 300 150 150 Bresenham
+saveCanvas 3
+setColor 100 100 100
+drawLine tonyma 120 160 300 100 Bresenham
+saveCanvas 4

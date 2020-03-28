@@ -26,9 +26,57 @@ def draw_line(p_list, algorithm):
             for x in range(x0, x1 + 1):
                 result.append((x, int(y0 + k * (x - x0))))
     elif algorithm == 'DDA':
-        pass
+        if(abs(x1-x0)>=abs(y1-y0)):
+            length=abs(x1-x0)
+        else:
+            length=abs(y1-y0)
+        if (length==0):
+            result.append((x0,y0))
+            return result
+        dx=(float)(x1-x0)/length
+        dy=(float)(y1-y0)/length
+        i=1
+        x=x0
+        y=y0
+        while(i<=length):
+            result.append((int(x+0.5),int(y+0.5)))
+            x=x+dx
+            y=y+dy
+            i+=1
     elif algorithm == 'Bresenham':
-        pass
+        dx=abs(x1-x0)
+        dy=abs(y1-y0)
+        if(dx==0 and dy==0):
+            result.append((x0,y0))
+            return result
+        gradient_flag=0
+        if(dx<dy):
+            gradient_flag=1
+        if(gradient_flag==1):
+            x0,y0=y0,x0
+            x1,y1=y1,x1
+            dx,dy=dy,dx
+        xx=1
+        if(x1-x0<0):
+            xx=-1
+        yy=1
+        if(y1-y0<0):
+            yy=-1
+        p=2*dy-dx
+        x=x0
+        y=y0
+        result.append((x,y))
+        while(x!=x1):
+            if(p>=0):
+                p+=2*dy-2*dx
+                y+=yy
+            else:
+                p+=2*dy
+            x+=xx
+            if(gradient_flag):
+                result.append((y,x))
+            else:
+                result.append((x,y))        
     return result
 
 
@@ -52,7 +100,43 @@ def draw_ellipse(p_list):
     :param p_list: (list of list of int: [[x0, y0], [x1, y1]]) 椭圆的矩形包围框左上角和右下角顶点坐标
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 绘制结果的像素点坐标列表
     """
-    pass
+    x0, y0 = p_list[0]
+    x1, y1 = p_list[1]
+    result = []
+    xx=int((x0+x1)/2)
+    yy=int((y0+y1)/2)
+    a=int((abs(x1-x0))/2)
+    b=int((abs(y1-y0))/2)
+    p=float(b**2+a**2*(0.25-b))
+    x=0
+    y=b
+    result.append((xx+x,yy+y))
+    result.append((xx-x,yy+y))
+    result.append((xx+x,yy-y))
+    result.append((xx-x,yy-y))
+    while(b**2*x<a**2*y):
+        if(p<0):
+            p+=b**2*(2*x+3)
+        else:
+            p+=b**2*(2*x+3)+a**2*(-2*y+2)
+            y-=1
+        x+=1
+        result.append((xx+x,yy+y))
+        result.append((xx-x,yy+y))
+        result.append((xx+x,yy-y))
+        result.append((xx-x,yy-y))
+    while(y>0):
+        if(p<0):
+            p+=b**2*(2*x+2)+a**2*(-2*y+3)
+            x+=1
+        else:
+            p+=a**2*(-2*y+3)
+        y-=1
+        result.append((xx+x,yy+y))
+        result.append((xx-x,yy+y))
+        result.append((xx+x,yy-y))
+        result.append((xx-x,yy-y))
+    return result
 
 
 def draw_curve(p_list, algorithm):
@@ -62,7 +146,14 @@ def draw_curve(p_list, algorithm):
     :param algorithm: (string) 绘制使用的算法，包括'Bezier'和'B-spline'（三次均匀B样条曲线，曲线不必经过首末控制点）
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 绘制结果的像素点坐标列表
     """
-    pass
+    x0, y0 = p_list[0]
+    x1, y1 = p_list[1]
+    result = []
+    if algorithm == 'Bezier':
+        pass
+    elif algorithm == 'B-spline':
+        pass
+    return result
 
 
 def translate(p_list, dx, dy):
@@ -73,7 +164,13 @@ def translate(p_list, dx, dy):
     :param dy: (int) 垂直方向平移量
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 变换后的图元参数
     """
-    pass
+    dx=int(dx)
+    dy=int(dy)
+    result = []
+    for x, y in p_list
+        result.append((x+dx,y+dy))
+    return result
+
 
 
 def rotate(p_list, x, y, r):

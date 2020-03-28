@@ -1,0 +1,4 @@
+resetCanvas 600 500
+setColor 0 0 0
+drawEllipse line1 100 200 350 350
+saveCanvas 1
