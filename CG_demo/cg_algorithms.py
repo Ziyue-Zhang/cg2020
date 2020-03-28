@@ -116,27 +116,39 @@ def draw_ellipse(p_list):
     result.append((xx-x,yy-y))
     while(b**2*x<a**2*y):
         if(p<0):
-            p+=b**2*(2*x+3)
+            p+=float(b**2*(2*x+3))
         else:
-            p+=b**2*(2*x+3)+a**2*(-2*y+2)
+            p+=float(b**2*(2*x+3)-a**2*(2*y-2))
             y-=1
         x+=1
         result.append((xx+x,yy+y))
         result.append((xx-x,yy+y))
         result.append((xx+x,yy-y))
         result.append((xx-x,yy-y))
+    p=float((b*(x+0.5))**2+(a*(y-1))**2-(a*b)**2)
     while(y>0):
         if(p<0):
-            p+=b**2*(2*x+2)+a**2*(-2*y+3)
+            p+=float(b**2*(2*x+2)+a**2*(-2*y+3))
             x+=1
         else:
-            p+=a**2*(-2*y+3)
+            p+=float(a**2*(-2*y+3))
         y-=1
         result.append((xx+x,yy+y))
         result.append((xx-x,yy+y))
         result.append((xx+x,yy-y))
         result.append((xx-x,yy-y))
     return result
+
+def Bezier_point(n, t, control_point):
+    while(n!=1):
+        for i in range(0, n-1):
+            x0,y0=control_point[i]
+            x1,y1=control_point[i+1]
+            x=float(x0*(1-t))+float(x1*t)
+            y=float(y0*(1-t))+float(y1*t)
+            control_point[i]=x,y
+        n-=1
+    return control_point[0]
 
 
 def draw_curve(p_list, algorithm):
@@ -146,13 +158,38 @@ def draw_curve(p_list, algorithm):
     :param algorithm: (string) 绘制使用的算法，包括'Bezier'和'B-spline'（三次均匀B样条曲线，曲线不必经过首末控制点）
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 绘制结果的像素点坐标列表
     """
-    x0, y0 = p_list[0]
-    x1, y1 = p_list[1]
     result = []
+    control_point = []
     if algorithm == 'Bezier':
-        pass
+        m=76800
+        for i in range(0, m):
+            control_point=p_list
+            t = float(i/m)
+            x,y=Bezier_point(len(p_list), t, control_point)
+            result.append((int(x+0.5),int(y+0.5)))
     elif algorithm == 'B-spline':
-        pass
+        n=len(p_list)
+        if(n<4):
+            print('请至少输入4个点')
+        for i in range(0, n-3):
+            x0,y0 = p_list[i]
+            x1,y1 = p_list[i+1]
+            x2,y2 = p_list[i+2]
+            x3,y3 = p_list[i+3]
+            p0 = float(-x0/6+x1/2-x2/2+x3/6)
+            p1 = float(x0/2-x1+x2/2)
+            p2 = float(-x0/2+x2/2)
+            p3 = float(x0/6+2*x1/3+x2/6)
+            q0 = float(-y0/6+y1/2-y2/2+y3/6)
+            q1 = float(y0/2-y1+y2/2)
+            q2 = float(-y0/2+y2/2)
+            q3 = float(y0/6+2*y1/3+y2/6)
+            m=50000
+            for i in range(0, m):
+                t = float(i/m)
+                x = p0*t**3+p1*t**2+p2*t+p3
+                y = q0*t**3+q1*t**2+q2*t+q3
+                result.append((int(x+0.5),int(y+0.5)))
     return result
 
 
@@ -164,10 +201,8 @@ def translate(p_list, dx, dy):
     :param dy: (int) 垂直方向平移量
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 变换后的图元参数
     """
-    dx=int(dx)
-    dy=int(dy)
     result = []
-    for x, y in p_list
+    for x, y in p_list:
         result.append((x+dx,y+dy))
     return result
 
@@ -182,7 +217,15 @@ def rotate(p_list, x, y, r):
     :param r: (int) 顺时针旋转角度（°）
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 变换后的图元参数
     """
-    pass
+    angel=float(r*math.pi/180)
+    cos=math.cos(angel)
+    sin=math.sin(angel)
+    result = []
+    for x0, y0 in p_list:
+        x1=int(float(x)+float((x0-x)*cos)-float((y0-y)*sin)+0.5)
+        y1=int(float(y)+float((x0-x)*sin)+float((y0-y)*cos)+0.5)
+        result.append((x1,y1))
+    return result
 
 
 def scale(p_list, x, y, s):
@@ -194,7 +237,12 @@ def scale(p_list, x, y, s):
     :param s: (float) 缩放倍数
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 变换后的图元参数
     """
-    pass
+    result = []
+    for x0, y0 in p_list:
+        x1=int(float(x0*s)+float(x*(1-s))+0.5)
+        y1=int(float(y0*s)+float(y*(1-s))+0.5)
+        result.append((x1,y1))
+    return result
 
 
 def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
@@ -208,4 +256,10 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
     :param algorithm: (string) 使用的裁剪算法，包括'Cohen-Sutherland'和'Liang-Barsky'
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1]]) 裁剪后线段的起点和终点坐标
     """
-    pass
+    result = []
+    result = p_list
+    if algorithm == 'Cohen-Sutherland':
+        pass
+    elif algorithm == 'Liang-Barsky':
+        pass
+    return result

@@ -1,4 +1,7 @@
 resetCanvas 600 500
-setColor 0 0 0
-drawEllipse line1 100 200 350 350
+setColor 0 255 0
+drawLine line1 500 50 100 50 Bresenham
 saveCanvas 1
+setColor 255 0 0
+clip line1 500 50 100 50 Cohen-Sutherland
+saveCanvas 2
