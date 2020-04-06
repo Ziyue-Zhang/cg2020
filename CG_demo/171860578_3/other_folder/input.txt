@@ -8,7 +8,6 @@ saveCanvas 2
 setColor 0 0 255
 drawLine nmsl 150 300 150 150 Bresenham
 saveCanvas 3
-resetCanvas 600 500
 setColor 100 100 100
 drawLine tonyma 120 160 300 100 Bresenham
 saveCanvas 4

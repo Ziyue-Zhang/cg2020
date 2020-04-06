@@ -23,7 +23,6 @@ if __name__ == '__main__':
         while line:
             line = line.strip().split(' ')
             if line[0] == 'resetCanvas':
-                item_dict = {}
                 width = int(line[1])
                 height = int(line[2])
             elif line[0] == 'saveCanvas':
