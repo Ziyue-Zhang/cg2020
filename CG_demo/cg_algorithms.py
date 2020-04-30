@@ -219,7 +219,7 @@ def rotate(p_list, x, y, r):
     """
     angel=float(r*math.pi/180)
     cos=math.cos(angel)
-    sin=math.sin(angel)
+    sin=-math.sin(angel)
     result = []
     for x0, y0 in p_list:
         x1=int(float(x)+float((x0-x)*cos)-float((y0-y)*sin)+0.5)
