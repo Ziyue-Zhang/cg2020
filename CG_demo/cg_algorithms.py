@@ -151,6 +151,15 @@ def Bezier_point(n, t, control_point):
     return control_point[0]
 
 
+def deboox_cox(i, k, u):
+    if k == 1:
+        if i<=u and u<i+1:
+            return 1
+        else:
+            return 0
+    else:
+        return (u-i)/(k-1)*deboox_cox(i,k-1,u)+(i+k-u)/(k-1)*deboox_cox(i+1,k-1,u)
+
 def draw_curve(p_list, algorithm):
     """绘制曲线
 
@@ -161,16 +170,17 @@ def draw_curve(p_list, algorithm):
     result = []
     control_point = []
     if algorithm == 'Bezier':
-        m=76800
+        m=len(p_list)*10000
         for i in range(0, m):
             control_point=p_list
             t = float(i/m)
             x,y=Bezier_point(len(p_list), t, control_point)
             result.append((int(x+0.5),int(y+0.5)))
     elif algorithm == 'B-spline':
-        n=len(p_list)
+        '''n=len(p_list)
         if(n<4):
             print('请至少输入4个点')
+            return result
         for i in range(0, n-3):
             x0,y0 = p_list[i]
             x1,y1 = p_list[i+1]
@@ -189,7 +199,22 @@ def draw_curve(p_list, algorithm):
                 t = float(i/m)
                 x = p0*t**3+p1*t**2+p2*t+p3
                 y = q0*t**3+q1*t**2+q2*t+q3
-                result.append((int(x+0.5),int(y+0.5)))
+                result.append((int(x+0.5),int(y+0.5)))'''
+        k = 3
+        n=len(p_list)
+        du=float(1/1000)
+        u =float(k)
+
+        while(u<n):
+            x1,y1 = 0,0
+            for i in range(0,n):
+                x0,y0 = p_list[i]
+                res=deboox_cox(i, k+1, u)
+                x1 +=x0*res
+                y1 +=y0*res
+            result.append([round(x1), round(y1)])
+            u+=du
+        
     return result
 
 

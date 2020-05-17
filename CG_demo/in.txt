@@ -1,4 +1,4 @@
 resetCanvas 600 500
 setColor 255 0 0
-drawCurve 666 100 100 100 400 400 400 400 100 250 250 Bezier
-saveCanvas b-spline3
+drawCurve 666 100 100 100 400 400 400 400 100 250 250 B-spline
+saveCanvas b-spline2
