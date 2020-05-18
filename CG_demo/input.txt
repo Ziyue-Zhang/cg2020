@@ -1,6 +1,6 @@
 resetCanvas 600 500
 setColor 0 255 0
-drawLine line1 100 250 400 250 Bresenham
+drawLine line1 100 150 400 150 Bresenham
 saveCanvas 1
-rotate line1 100 250 30
+clip line1 100 400 400 200 Liang-Barsky
 saveCanvas 2
