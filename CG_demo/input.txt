@@ -1,6 +1,5 @@
 resetCanvas 600 500
-setColor 0 255 0
-drawLine line1 100 150 400 150 Bresenham
-saveCanvas 1
-clip line1 100 400 400 200 Liang-Barsky
-saveCanvas 2
+setColor 255 0 0
+drawLine 1 100 300 400 300 DDA
+clip 1 100 100 200 400 Liang-Barsky
+saveCanvas polygon

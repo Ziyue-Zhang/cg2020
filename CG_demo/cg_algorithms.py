@@ -93,6 +93,19 @@ def draw_polygon(p_list, algorithm):
         result += line
     return result
 
+def draw_part_polygon(p_list, algorithm):
+    """绘制多边形
+
+    :param p_list: (list of list of int: [[x0, y0], [x1, y1], [x2, y2], ...]) 多边形的顶点坐标列表
+    :param algorithm: (string) 绘制使用的算法，包括'DDA'和'Bresenham'
+    :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 绘制结果的像素点坐标列表
+    """
+    result = []
+    for i in range(1,len(p_list)):
+        line = draw_line([p_list[i - 1], p_list[i]], algorithm)
+        result += line
+    return result
+
 
 def draw_ellipse(p_list):
     """绘制椭圆（采用中点圆生成算法）
@@ -172,7 +185,7 @@ def draw_curve(p_list, algorithm):
     if algorithm == 'Bezier':
         m=len(p_list)*10000
         for i in range(0, m):
-            control_point=p_list
+            control_point=p_list.copy()
             t = float(i/m)
             x,y=Bezier_point(len(p_list), t, control_point)
             result.append((int(x+0.5),int(y+0.5)))
@@ -202,6 +215,8 @@ def draw_curve(p_list, algorithm):
                 result.append((int(x+0.5),int(y+0.5)))'''
         k = 3
         n=len(p_list)
+        if(n<4):
+            return result
         du=float(1/1000)
         u =float(k)
 
@@ -282,6 +297,11 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1]]) 裁剪后线段的起点和终点坐标
     """
     result = []
+    if x_min > x_max:
+        x_min, x_max = x_max, x_min
+    if y_min > y_max:
+        y_min, y_max = y_max, y_min
+
     if algorithm == 'Cohen-Sutherland':
         x0,y0 = p_list[0]
         x1,y1 = p_list[1]
@@ -307,7 +327,7 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
         if((code1|code2)==0):
             result=p_list
         elif((code1&code2)!=0):
-            result=[[0,0],[0,0]]
+            result=[[x0,y0],[x0,y0]]
         else:
             code=code1|code2
             if(code&1):
@@ -363,7 +383,7 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
             if((code1|code2)==0):
                 result=[[x0,y0], [x1,y1]]
             else:
-                result=[[0,0],[0,0]]
+                result=[[x0,y0],[x0,y0]]
 
     elif algorithm == 'Liang-Barsky':
         x0,y0 = p_list[0]
@@ -393,5 +413,6 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
             yy1=int(y0+u2*(y1-y0)+0.5)
             result=[[xx0,yy0],[xx1,yy1]]
         else:
-            result=[[0,0],[0,0]]
+            result=[[0,0],[0,0]]     
+        
     return result
