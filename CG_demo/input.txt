@@ -1,5 +1,5 @@
 resetCanvas 600 500
 setColor 255 0 0
-drawLine 1 100 300 400 300 DDA
-clip 1 100 100 200 400 Liang-Barsky
+drawLine 1 100 100 400 400 DDA
+clip 1 150 200 160 250 Liang-Barsky
 saveCanvas polygon

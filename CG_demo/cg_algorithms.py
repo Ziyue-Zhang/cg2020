@@ -297,6 +297,10 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1]]) 裁剪后线段的起点和终点坐标
     """
     result = []
+    if(x_min==x_max or y_min==y_max):
+        result=[[0,0],[0,0]]
+        return result
+
     if x_min > x_max:
         x_min, x_max = x_max, x_min
     if y_min > y_max:
@@ -308,27 +312,60 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
         code1=0
         code2=0
         if(x0<x_min):
-            code1+=1
+            code1|=1
         if(x0>x_max):
-            code1+=2
+            code1|=2
         if(y0<y_min):
-            code1+=4
+            code1|=4
         if(y0>y_max):
-            code1+=8
+            code1|=8
         if(x1<x_min):
-            code2+=1
+            code2|=1
         if(x1>x_max):
-            code2+=2
+            code2|=2
         if(y1<y_min):
-            code2+=4
+            code2|=4
         if(y1>y_max):
-            code2+=8
+            code2|=8
 
         if((code1|code2)==0):
             result=p_list
         elif((code1&code2)!=0):
-            result=[[x0,y0],[x0,y0]]
+            result=[[0,0],[0,0]]
         else:
+            if(x0==x1):
+                if (min(y0, y1) > y_max or max(y0, y1) < y_min):
+                    result=[[0,0],[0,0]]
+                    return result
+                if (y1 >= y0):
+                    if (y1 > y_max):
+                        y1=y_max
+                    if (y0 < y_min):
+                        y0=y_min
+                elif (y0 > y1):
+                    if (y0 > y_max):
+                        y0=y_max
+                    if (y1 < y_min):
+                        y1=y_min
+                result=[[x0,y0], [x1,y1]]
+                return result
+            if(y0==y1):
+                if (min(x0, x1) > x_max or max(x0, x1) < x_min):
+                    result=[[0,0],[0,0]]
+                    return result
+                if (x1 >= x0):
+                    if (x1 > x_max):
+                        x1=x_max
+                    if (x0 < x_min):
+                        x0=x_min
+                elif (x0 > x1):
+                    if (x0 > x_max):
+                        x0=x_max
+                    if (x1 < x_min):
+                        x1=x_min
+                result=[[x0,y0], [x1,y1]]
+                return result
+            
             code=code1|code2
             if(code&1):
                 yy=int(float((x_min-x1)*(y0-y1)/(x0-x1))+float(y1)+0.5)
@@ -362,28 +399,10 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
                 elif(y1>y_max):
                     x1=xx
                     y1=y_max
-            code1=0
-            code2=0
-            if(x0<x_min):
-                code1+=1
-            if(x0>x_max):
-                code1+=2
-            if(y0<y_min):
-                code1+=4
-            if(y0>y_max):
-                code1+=8
-            if(x1<x_min):
-                code2+=1
-            if(x1>x_max):
-                code2+=2
-            if(y1<y_min):
-                code2+=4
-            if(y1>y_max):
-                code2+=8
-            if((code1|code2)==0):
+            if(x0 <= x_max and x0 >= x_min and x1 <= x_max and x1 >= x_min and y0 <= y_max and y0 >= y_min and y1 <= y_max and y1 >= y_min):
                 result=[[x0,y0], [x1,y1]]
             else:
-                result=[[x0,y0],[x0,y0]]
+                result=[[0,0],[0,0]]
 
     elif algorithm == 'Liang-Barsky':
         x0,y0 = p_list[0]
@@ -401,9 +420,9 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
                     continue
                 r=float(q[i]/p[i])
                 if(p[i]<0):
-                    u1=max(float(0),r)
+                    u1=max(u1,r)
                 else:
-                    u2=min(float(1),r)
+                    u2=min(u2,r)
                 if(u1>u2):
                     flag=True
         if(flag==False):

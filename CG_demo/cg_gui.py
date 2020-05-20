@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QStyleOptionGraphicsItem)
 from PyQt5.QtGui import QPainter, QMouseEvent, QColor
-from PyQt5.QtCore import QRectF
+from PyQt5.QtCore import QRectF, Qt
 
 
 class MyCanvas(QGraphicsView):
@@ -163,7 +163,11 @@ class MyCanvas(QGraphicsView):
         elif self.status == 'translate':
             self.start_xy=[x,y]
         elif self.status == 'rotate':
-            self.start_xy=[x,y]
+            if event.button() == Qt.LeftButton:
+                self.start_xy=[x,y]
+            else:
+                self.plist =self.temp_item.p_list    
+                self.status=''
         elif self.status == 'scale':
             self.start_xy=[x,y]
         elif self.status == 'clip':
@@ -201,12 +205,6 @@ class MyCanvas(QGraphicsView):
         elif self.status == 'scale':
             s = ((x - self.start_xy[0])**2+(y - self.start_xy[1])**2) / 10000
             self.temp_item.p_list=alg.scale(self.plist,self.start_xy[0],self.start_xy[1],s)
-        elif self.status == 'rotate':
-            xx=x-self.start_xy[0]
-            yy=y-self.start_xy[1]
-            if(yy>0 and xx>0):
-                self.angel=self.angel-1
-                self.temp_item.p_list=alg.rotate(self.plist,self.start_xy[0],self.start_xy[1],self.angel)
         elif self.status == 'clip':
             self.temp_item.p_list=alg.clip(self.plist,self.start_xy[0],self.start_xy[1],x,y,self.temp_algorithm)
         self.updateScene([self.sceneRect()])
@@ -253,6 +251,17 @@ class MyCanvas(QGraphicsView):
             self.plist =self.temp_item.p_list    
             self.status=''
         super().mouseReleaseEvent(event)
+
+    def wheelEvent (self, event):
+        if self.status == 'rotate':
+            if(event.angleDelta().y()<0):
+                self.angel=self.angel-1
+            else:
+                self.angel=self.angel+1
+            self.temp_item.p_list=alg.rotate(self.plist,self.start_xy[0],self.start_xy[1],self.angel)
+        self.updateScene([self.sceneRect()])
+        #super(). wheelEvent(event)
+
 
 
 class MyItem(QGraphicsItem):
