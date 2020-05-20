@@ -397,6 +397,7 @@ class MainWindow(QMainWindow):
         file_menu = menubar.addMenu('文件')
         set_pen_act = file_menu.addAction('设置画笔')
         reset_canvas_act = file_menu.addAction('重置画布')
+        save_canvas_act = file_menu.addAction('保存画布')
         exit_act = file_menu.addAction('退出')
         draw_menu = menubar.addMenu('绘制')
         line_menu = draw_menu.addMenu('线段')
@@ -422,6 +423,7 @@ class MainWindow(QMainWindow):
         exit_act.triggered.connect(qApp.quit)
         set_pen_act.triggered.connect(self.set_pen_action)
         reset_canvas_act.triggered.connect(self.reset_canvas_action)
+        save_canvas_act.triggered.connect(self.save_canvas_action)
         line_naive_act.triggered.connect(self.line_naive_action)
         line_dda_act.triggered.connect(self.line_dda_action)
         line_bresenham_act.triggered.connect(self.line_bresenham_action)
@@ -468,6 +470,15 @@ class MainWindow(QMainWindow):
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
         self.list_widget.clear()
+    
+    def save_canvas_action(self):
+        text, ok = QInputDialog.getText(self, '保存画布', '文件名(无需输入.bmp后缀):')
+        if ok:
+            filename=str(text)+".bmp"
+            res=self.canvas_widget.grab(self.canvas_widget.sceneRect().toRect())
+            res.save(filename)
+        else:
+            return
 
     def line_naive_action(self):
         if(self.item_cnt>0):
