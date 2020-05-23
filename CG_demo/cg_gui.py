@@ -73,6 +73,7 @@ class MyCanvas(QGraphicsView):
         if self.selected_id=='':
             return
         if self.item_dict[self.selected_id].item_type == 'ellipse':
+            self.status=''
             return
         self.status = 'rotate'
         self.temp_item=self.item_dict[self.selected_id]
@@ -90,6 +91,7 @@ class MyCanvas(QGraphicsView):
         if self.selected_id=='':
             return
         if self.item_dict[self.selected_id].item_type != 'line':
+            self.status=''
             return
         self.status = 'clip'
         self.temp_item=self.item_dict[self.selected_id]
@@ -208,6 +210,7 @@ class MyCanvas(QGraphicsView):
         elif self.status == 'clip':
             self.temp_item.p_list=alg.clip(self.plist,self.start_xy[0],self.start_xy[1],x,y,self.temp_algorithm)
         self.updateScene([self.sceneRect()])
+        #self.prepareGeometryChange()
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
@@ -472,6 +475,8 @@ class MainWindow(QMainWindow):
         self.list_widget.clear()
     
     def save_canvas_action(self):
+        self.list_widget.clearSelection()
+        self.canvas_widget.clear_selection()
         text, ok = QInputDialog.getText(self, '保存画布', '文件名(无需输入.bmp后缀):')
         if ok:
             filename=str(text)+".bmp"
