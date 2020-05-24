@@ -192,7 +192,6 @@ def draw_curve(p_list, algorithm):
     elif algorithm == 'B-spline':
         '''n=len(p_list)
         if(n<4):
-            print('请至少输入4个点')
             return result
         for i in range(0, n-3):
             x0,y0 = p_list[i]

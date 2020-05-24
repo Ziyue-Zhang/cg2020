@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QStyleOptionGraphicsItem)
 from PyQt5.QtGui import QPainter, QMouseEvent, QColor
 from PyQt5.QtCore import QRectF, Qt
+import PyQt5.QtCore as QtCore
 
 
 class MyCanvas(QGraphicsView):
@@ -382,6 +383,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.item_cnt = 0
         self.col=QColor(0, 0, 0)
+        self.w=600
+        self.h=600
 
         # 使用QListWidget来记录已有的图元，并用于选择图元。注：这是图元选择的简单实现方法，更好的实现是在画布中直接用鼠标选择图元
         self.list_widget = QListWidget(self)
@@ -389,11 +392,14 @@ class MainWindow(QMainWindow):
 
         # 使用QGraphicsView作为画布
         self.scene = QGraphicsScene(self)
-        self.scene.setSceneRect(0, 0, 600, 600)
+        self.scene.setSceneRect(0, 0, self.w, self.h)
         self.canvas_widget = MyCanvas(self.scene, self)
-        self.canvas_widget.setFixedSize(600, 600)
+        self.canvas_widget.setFixedSize(self.w, self.h)
         self.canvas_widget.main_window = self
         self.canvas_widget.list_widget = self.list_widget
+
+        self.canvas_widget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.canvas_widget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff) 
 
         # 设置菜单栏
         menubar = self.menuBar()
@@ -450,7 +456,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.hbox_layout)
         self.setCentralWidget(self.central_widget)
         self.statusBar().showMessage('空闲')
-        self.resize(600, 600)
+        self.resize(self.w, self.h)
         self.setWindowTitle('CG Demo')
 
     def get_id(self):
@@ -473,6 +479,30 @@ class MainWindow(QMainWindow):
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
         self.list_widget.clear()
+        
+        ww=self.w
+        hh=self.h
+        text, ok = QInputDialog.getText(self, '重置画布', '请输入画布宽度:')
+        if ok:
+            ww=int(str(text))
+        if(ww<100 or ww>1000):
+            QMessageBox.about(self, "提示", "修改失败,请保证输入的数字大于等于100小于等于1000")
+            ww=self.w
+        text, ok = QInputDialog.getText(self, '重置画布', '请输入画布高度:')
+        if ok:
+            hh=int(str(text))
+        if(hh<100 or hh>1000):
+            QMessageBox.about(self, "提示", "修改失败,请保证输入的数字大于等于100小于等于1000")
+            hh=self.h
+        self.w=ww
+        self.h=hh
+        self.scene.setSceneRect(0, 0, self.w, self.h)
+        self.canvas_widget.resize(self.w,self.h)
+        self.canvas_widget.setFixedSize(self.w, self.h)
+        self.statusBar().showMessage('空闲')
+        self.setMaximumHeight(self.h)
+        self.setMaximumWidth(self.w)
+        self.resize(self.w, self.h)
     
     def save_canvas_action(self):
         self.list_widget.clearSelection()
