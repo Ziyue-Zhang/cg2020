@@ -22,7 +22,6 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QSlider,
     QDialogButtonBox,
-    QFileDialog,
     QStyleOptionGraphicsItem)
 from PyQt5.QtGui import QPainter, QMouseEvent, QColor
 from PyQt5.QtCore import QRectF, Qt
@@ -492,21 +491,21 @@ class MainWindow(QMainWindow):
         box1 = QSpinBox(dialog)
         box1.setRange(100, 1000)
         box1.setSingleStep(1)
-        box1.setValue(self.w)
+        box1.setValue(600)
         slider1 = QSlider(Qt.Horizontal)
         slider1.setRange(100, 1000)
         slider1.setSingleStep(1)
-        slider1.setValue(self.w)
+        slider1.setValue(600)
         slider1.setTickPosition(QSlider.TicksBelow)
         slider1.setTickInterval(100)
         box2 = QSpinBox(dialog)
         box2.setRange(100, 1000)
         box2.setSingleStep(1)
-        box2.setValue(self.h)
+        box2.setValue(600)
         slider2 = QSlider(Qt.Horizontal)
         slider2.setRange(100, 1000)
         slider2.setSingleStep(1)
-        slider2.setValue(self.h)
+        slider2.setValue(600)
         slider2.setTickPosition(QSlider.TicksBelow)
         slider2.setTickInterval(100)
         slider1.valueChanged.connect(box1.setValue)
@@ -540,12 +539,13 @@ class MainWindow(QMainWindow):
     def save_canvas_action(self):
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
-        self.statusBar().showMessage('保存画布')
-        dialog=QFileDialog()
-        filename=dialog.getSaveFileName(filter="Image Files(*.jpg *.png *.bmp)")
-        if filename[0]:
+        text, ok = QInputDialog.getText(self, '保存画布', '文件名(无需输入.bmp后缀):')
+        if ok:
+            filename=str(text)+".bmp"
             res=self.canvas_widget.grab(self.canvas_widget.sceneRect().toRect())
-            res.save(filename[0])
+            res.save(filename)
+        else:
+            return
 
     def line_naive_action(self):
         if(self.item_cnt>0):

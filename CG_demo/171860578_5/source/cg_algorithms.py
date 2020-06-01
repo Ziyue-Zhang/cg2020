@@ -93,6 +93,19 @@ def draw_polygon(p_list, algorithm):
         result += line
     return result
 
+def draw_part_polygon(p_list, algorithm):
+    """绘制多边形
+
+    :param p_list: (list of list of int: [[x0, y0], [x1, y1], [x2, y2], ...]) 多边形的顶点坐标列表
+    :param algorithm: (string) 绘制使用的算法，包括'DDA'和'Bresenham'
+    :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 绘制结果的像素点坐标列表
+    """
+    result = []
+    for i in range(1,len(p_list)):
+        line = draw_line([p_list[i - 1], p_list[i]], algorithm)
+        result += line
+    return result
+
 
 def draw_ellipse(p_list):
     """绘制椭圆（采用中点圆生成算法）
@@ -151,6 +164,15 @@ def Bezier_point(n, t, control_point):
     return control_point[0]
 
 
+def deboox_cox(i, k, u):
+    if k == 1:
+        if i<=u and u<i+1:
+            return 1
+        else:
+            return 0
+    else:
+        return (u-i)/(k-1)*deboox_cox(i,k-1,u)+(i+k-u)/(k-1)*deboox_cox(i+1,k-1,u)
+
 def draw_curve(p_list, algorithm):
     """绘制曲线
 
@@ -161,16 +183,16 @@ def draw_curve(p_list, algorithm):
     result = []
     control_point = []
     if algorithm == 'Bezier':
-        m=76800
+        m=len(p_list)*10000
         for i in range(0, m):
-            control_point=p_list
+            control_point=p_list.copy()
             t = float(i/m)
             x,y=Bezier_point(len(p_list), t, control_point)
             result.append((int(x+0.5),int(y+0.5)))
     elif algorithm == 'B-spline':
-        n=len(p_list)
+        '''n=len(p_list)
         if(n<4):
-            print('请至少输入4个点')
+            return result
         for i in range(0, n-3):
             x0,y0 = p_list[i]
             x1,y1 = p_list[i+1]
@@ -189,7 +211,24 @@ def draw_curve(p_list, algorithm):
                 t = float(i/m)
                 x = p0*t**3+p1*t**2+p2*t+p3
                 y = q0*t**3+q1*t**2+q2*t+q3
-                result.append((int(x+0.5),int(y+0.5)))
+                result.append((int(x+0.5),int(y+0.5)))'''
+        k = 3
+        n=len(p_list)
+        if(n<4):
+            return result
+        du=float(1/1000)
+        u =float(k)
+
+        while(u<n):
+            x1,y1 = 0,0
+            for i in range(0,n):
+                x0,y0 = p_list[i]
+                res=deboox_cox(i, k+1, u)
+                x1 +=x0*res
+                y1 +=y0*res
+            result.append([round(x1), round(y1)])
+            u+=du
+        
     return result
 
 
@@ -219,7 +258,7 @@ def rotate(p_list, x, y, r):
     """
     angel=float(r*math.pi/180)
     cos=math.cos(angel)
-    sin=math.sin(angel)
+    sin=-math.sin(angel)
     result = []
     for x0, y0 in p_list:
         x1=int(float(x)+float((x0-x)*cos)-float((y0-y)*sin)+0.5)
@@ -257,33 +296,75 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
     :return: (list of list of int: [[x_0, y_0], [x_1, y_1]]) 裁剪后线段的起点和终点坐标
     """
     result = []
+    if(x_min==x_max or y_min==y_max):
+        result=[[0,0],[0,0]]
+        return result
+
+    if x_min > x_max:
+        x_min, x_max = x_max, x_min
+    if y_min > y_max:
+        y_min, y_max = y_max, y_min
+
     if algorithm == 'Cohen-Sutherland':
         x0,y0 = p_list[0]
         x1,y1 = p_list[1]
         code1=0
         code2=0
         if(x0<x_min):
-            code1+=1
+            code1|=1
         if(x0>x_max):
-            code1+=2
+            code1|=2
         if(y0<y_min):
-            code1+=4
+            code1|=4
         if(y0>y_max):
-            code1+=8
+            code1|=8
         if(x1<x_min):
-            code2+=1
+            code2|=1
         if(x1>x_max):
-            code2+=2
+            code2|=2
         if(y1<y_min):
-            code2+=4
+            code2|=4
         if(y1>y_max):
-            code2+=8
+            code2|=8
 
         if((code1|code2)==0):
             result=p_list
         elif((code1&code2)!=0):
             result=[[0,0],[0,0]]
         else:
+            if(x0==x1):
+                if (min(y0, y1) > y_max or max(y0, y1) < y_min):
+                    result=[[0,0],[0,0]]
+                    return result
+                if (y1 >= y0):
+                    if (y1 > y_max):
+                        y1=y_max
+                    if (y0 < y_min):
+                        y0=y_min
+                elif (y0 > y1):
+                    if (y0 > y_max):
+                        y0=y_max
+                    if (y1 < y_min):
+                        y1=y_min
+                result=[[x0,y0], [x1,y1]]
+                return result
+            if(y0==y1):
+                if (min(x0, x1) > x_max or max(x0, x1) < x_min):
+                    result=[[0,0],[0,0]]
+                    return result
+                if (x1 >= x0):
+                    if (x1 > x_max):
+                        x1=x_max
+                    if (x0 < x_min):
+                        x0=x_min
+                elif (x0 > x1):
+                    if (x0 > x_max):
+                        x0=x_max
+                    if (x1 < x_min):
+                        x1=x_min
+                result=[[x0,y0], [x1,y1]]
+                return result
+            
             code=code1|code2
             if(code&1):
                 yy=int(float((x_min-x1)*(y0-y1)/(x0-x1))+float(y1)+0.5)
@@ -317,25 +398,7 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
                 elif(y1>y_max):
                     x1=xx
                     y1=y_max
-            code1=0
-            code2=0
-            if(x0<x_min):
-                code1+=1
-            if(x0>x_max):
-                code1+=2
-            if(y0<y_min):
-                code1+=4
-            if(y0>y_max):
-                code1+=8
-            if(x1<x_min):
-                code2+=1
-            if(x1>x_max):
-                code2+=2
-            if(y1<y_min):
-                code2+=4
-            if(y1>y_max):
-                code2+=8
-            if((code1|code2)==0):
+            if(x0 <= x_max and x0 >= x_min and x1 <= x_max and x1 >= x_min and y0 <= y_max and y0 >= y_min and y1 <= y_max and y1 >= y_min):
                 result=[[x0,y0], [x1,y1]]
             else:
                 result=[[0,0],[0,0]]
@@ -356,9 +419,9 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
                     continue
                 r=float(q[i]/p[i])
                 if(p[i]<0):
-                    u1=max(float(0),r)
+                    u1=max(u1,r)
                 else:
-                    u2=min(float(1),r)
+                    u2=min(u2,r)
                 if(u1>u2):
                     flag=True
         if(flag==False):
@@ -368,5 +431,6 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
             yy1=int(y0+u2*(y1-y0)+0.5)
             result=[[xx0,yy0],[xx1,yy1]]
         else:
-            result=[[0,0],[0,0]]
+            result=[[0,0],[0,0]]     
+        
     return result

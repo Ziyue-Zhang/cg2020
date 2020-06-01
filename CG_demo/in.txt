@@ -1,4 +1,4 @@
 resetCanvas 600 500
-setColor 255 0 0
-drawCurve 666 100 100 100 400 400 400 400 100 250 250 B-spline
-saveCanvas b-spline2
+setColor 0 0 0
+drawCurve c1 50 50 75 75 100 125 125 200 150 275 175 375 200 500 B-spline
+saveCanvas 5
