@@ -149,7 +149,8 @@ class MyCanvas(QGraphicsView):
             return
         self.item_dict[selected].selected = True
         self.item_dict[selected].update()
-        self.status = ''
+        if(self.status!='select'):
+            self.status = ''
         self.updateScene([self.sceneRect()])
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -204,6 +205,7 @@ class MyCanvas(QGraphicsView):
                     self.selected_id = item
                     self.item_dict[item].selected = True
                     self.item_dict[item].update()
+                    self.main_window.list_widget.setCurrentRow(int(item))
 
         self.updateScene([self.sceneRect()])
         super().mousePressEvent(event)
