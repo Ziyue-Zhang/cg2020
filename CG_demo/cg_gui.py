@@ -23,6 +23,8 @@ from PyQt5.QtWidgets import (
     QSlider,
     QDialogButtonBox,
     QFileDialog,
+    QLabel,
+    QToolBar,
     QStyleOptionGraphicsItem)
 from PyQt5.QtGui import QPainter, QMouseEvent, QColor
 from PyQt5.QtCore import QRectF, Qt
@@ -69,6 +71,10 @@ class MyCanvas(QGraphicsView):
         self.temp_id = item_id
         self.dot_num = dot_num
 
+    def set_dot_num(self, algorithm, dot_num):
+        if(self.temp_algorithm == algorithm):
+            self.dot_num = dot_num
+
     def start_translate(self):
         if self.selected_id=='':
             return
@@ -104,6 +110,9 @@ class MyCanvas(QGraphicsView):
         self.temp_item=self.item_dict[self.selected_id]
         self.plist=self.temp_item.p_list
         self.temp_algorithm = algorithm
+
+    def start_choose(self):
+        self.status = 'choose'
 
     def finish_draw(self):
         self.temp_id = self.main_window.get_id()
@@ -181,6 +190,17 @@ class MyCanvas(QGraphicsView):
             self.start_xy=[x,y]
         elif self.status == 'clip':
             self.start_xy=[x,y]
+        elif self.status == 'choose':
+            selected=self.itemAt(x,y)
+            for item in self.item_dict:
+                if(self.item_dict[item]==selected):
+                    if self.selected_id != '':
+                        self.item_dict[self.selected_id].selected = False
+                        self.item_dict[self.selected_id].update()
+                        self.updateScene([self.sceneRect()])
+                    self.selected_id = item
+                    self.item_dict[item].selected = True
+                    self.item_dict[item].update()
 
         self.updateScene([self.sceneRect()])
         super().mousePressEvent(event)
@@ -391,6 +411,8 @@ class MainWindow(QMainWindow):
         self.col=QColor(0, 0, 0)
         self.w=600
         self.h=600
+        self.bezier_num=3
+        self.bspline_num=4
 
         # 使用QListWidget来记录已有的图元，并用于选择图元。注：这是图元选择的简单实现方法，更好的实现是在画布中直接用鼠标选择图元
         self.list_widget = QListWidget(self)
@@ -433,6 +455,7 @@ class MainWindow(QMainWindow):
         clip_menu = edit_menu.addMenu('裁剪')
         clip_cohen_sutherland_act = clip_menu.addAction('Cohen-Sutherland')
         clip_liang_barsky_act = clip_menu.addAction('Liang-Barsky')
+        choose_item = edit_menu.addAction('选择图元')
 
         # 连接信号和槽函数
         exit_act.triggered.connect(qApp.quit)
@@ -452,6 +475,7 @@ class MainWindow(QMainWindow):
         scale_act.triggered.connect(self.scale_action)
         clip_cohen_sutherland_act.triggered.connect(self.clip_cohen_sutherland_action)
         clip_liang_barsky_act.triggered.connect(self.clip_liang_barsky_action)
+        choose_item.triggered.connect(self.choose_item_action)
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
 
         # 设置主窗口的布局
@@ -465,10 +489,37 @@ class MainWindow(QMainWindow):
         self.resize(self.w, self.h)
         self.setWindowTitle('CG Demo')
 
+        setbar=QToolBar()
+        self.addToolBar(Qt.LeftToolBarArea,setbar)
+ 
+        self.bezier_box = QSpinBox()
+        self.bezier_box.setRange(3, 20)
+        self.bezier_box.setSingleStep(1)
+        self.bezier_box.setValue(self.bezier_num)
+        setbar.addWidget(QLabel("Bezier控制点数"))
+        setbar.addWidget(self.bezier_box)
+        setbar.addSeparator()
+        self.bspline_box = QSpinBox()
+        self.bspline_box.setRange(4, 20)
+        self.bspline_box.setSingleStep(1)
+        self.bspline_box.setValue(self.bspline_num)
+        setbar.addWidget(QLabel("B样条阶数"))
+        setbar.addWidget(self.bspline_box)
+        self.bezier_box.valueChanged.connect(self.set_bezier_num)
+        self.bspline_box.valueChanged.connect(self.set_bspline_num)
+
     def get_id(self):
         _id = str(self.item_cnt)
         self.item_cnt += 1
         return _id
+
+    def set_bezier_num(self):
+        self.bezier_num=self.bezier_box.value()
+        self.canvas_widget.set_dot_num('Bezier',self.bezier_num)
+
+    def set_bspline_num(self):
+        self.bspline_num=self.bspline_box.value()
+        self.canvas_widget.set_dot_num('B-spline',self.bspline_num)
 
     def set_pen_action(self):
         self.statusBar().showMessage('设置画笔')
@@ -488,7 +539,7 @@ class MainWindow(QMainWindow):
         
         dialog = QDialog()
         dialog.setWindowTitle('重置画布')
-        form = QFormLayout(dialog)
+        formlayout = QFormLayout(dialog)
         box1 = QSpinBox(dialog)
         box1.setRange(100, 1000)
         box1.setSingleStep(1)
@@ -513,20 +564,22 @@ class MainWindow(QMainWindow):
         box1.valueChanged.connect(slider1.setValue)
         slider2.valueChanged.connect(box2.setValue)
         box2.valueChanged.connect(slider2.setValue)
-        form.addRow('Width:', box1)
-        form.addRow(slider1)
-        form.addRow('Height:', box2)
-        form.addRow(slider2)
+        formlayout.addRow('Width:', box1)
+        formlayout.addRow(slider1)
+        formlayout.addRow('Height:', box2)
+        formlayout.addRow(slider2)
     
         box3 = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         box3.accepted.connect(dialog.accept)
         box3.rejected.connect(dialog.reject)
-        form.addRow(box3)
+        formlayout.addRow(box3)
         
         if dialog.exec():
             if(box1.value()<100 or box1.value()>1000 or box2.value()<100 or box2.value()>1000):
                 QMessageBox.about(self, "提示", "修改失败,请保证输入的数字大于等于100小于等于1000")
             else:
+                temp1=self.w-box1.value()
+                temp2=self.h-box2.value()
                 self.w = box1.value()
                 self.h = box2.value()
             self.scene.setSceneRect(0, 0, self.w, self.h)
@@ -596,35 +649,35 @@ class MainWindow(QMainWindow):
         self.canvas_widget.clear_selection()
 
     def curve_bezier_action(self):
-        text, ok = QInputDialog.getText(self, 'Bezier算法绘制曲线', '请输入控制点数目:')
+        '''text, ok = QInputDialog.getText(self, 'Bezier算法绘制曲线', '请输入控制点数目:')
         if ok:
             n=int(str(text))
         else:
             return
         if(n<=1):
             QMessageBox.about(self, "提示", "请保证输入的数字大于1")
-            return
+            return'''
 
         if(self.item_cnt>0):
             self.item_cnt-=1
-        self.canvas_widget.start_draw_curve('Bezier', self.get_id(), n)
+        self.canvas_widget.start_draw_curve('Bezier', self.get_id(), self.bezier_num)
         self.statusBar().showMessage('Bezier算法绘制曲线')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
 
     def curve_b_spline_action(self):
-        text, ok = QInputDialog.getText(self, 'B-spline算法绘制曲线', '请输入控制点数目:')
+        '''text, ok = QInputDialog.getText(self, 'B-spline算法绘制曲线', '请输入控制点数目:')
         if ok:
             n=int(str(text))
         else:
             return
         if(n<=3):
             QMessageBox.about(self, "提示", "请保证输入的数字大于3")
-            return
+            return'''
 
         if(self.item_cnt>0):
             self.item_cnt-=1
-        self.canvas_widget.start_draw_curve('B-spline', self.get_id(), n)
+        self.canvas_widget.start_draw_curve('B-spline', self.get_id(), self.bspline_num)
         self.statusBar().showMessage('B-spline算法绘制曲线')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
@@ -648,6 +701,10 @@ class MainWindow(QMainWindow):
     def clip_liang_barsky_action(self):
         self.canvas_widget.start_clip('Liang-Barsky')
         self.statusBar().showMessage('裁剪')
+
+    def choose_item_action(self):
+        self.canvas_widget.start_choose()
+        self.statusBar().showMessage('选择图元')
 
 
 
