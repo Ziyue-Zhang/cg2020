@@ -29,6 +29,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPainter, QMouseEvent, QColor
 from PyQt5.QtCore import QRectF, Qt
 import PyQt5.QtCore as QtCore
+import PyQt5.QtGui as QtGui
 
 
 class MyCanvas(QGraphicsView):
@@ -50,6 +51,8 @@ class MyCanvas(QGraphicsView):
         self.start_xy=None
         self.plist=None
         self.angel=0
+        self.offset_x=0
+        self.offset_y=0
 
     def start_draw_line(self, algorithm, item_id):
         self.status = 'line'
@@ -111,8 +114,8 @@ class MyCanvas(QGraphicsView):
         self.plist=self.temp_item.p_list
         self.temp_algorithm = algorithm
 
-    def start_choose(self):
-        self.status = 'choose'
+    def start_select(self):
+        self.status = 'select'
 
     def finish_draw(self):
         self.temp_id = self.main_window.get_id()
@@ -190,8 +193,8 @@ class MyCanvas(QGraphicsView):
             self.start_xy=[x,y]
         elif self.status == 'clip':
             self.start_xy=[x,y]
-        elif self.status == 'choose':
-            selected=self.itemAt(x,y)
+        elif self.status == 'select':
+            selected=self.scene().itemAt(pos,QtGui.QTransform())
             for item in self.item_dict:
                 if(self.item_dict[item]==selected):
                     if self.selected_id != '':
@@ -409,8 +412,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.item_cnt = 0
         self.col=QColor(0, 0, 0)
-        self.w=600
-        self.h=600
+        self.w=1000
+        self.h=1000
         self.bezier_num=3
         self.bspline_num=4
 
@@ -455,7 +458,7 @@ class MainWindow(QMainWindow):
         clip_menu = edit_menu.addMenu('裁剪')
         clip_cohen_sutherland_act = clip_menu.addAction('Cohen-Sutherland')
         clip_liang_barsky_act = clip_menu.addAction('Liang-Barsky')
-        choose_item = edit_menu.addAction('选择图元')
+        select_item = edit_menu.addAction('选择图元')
 
         # 连接信号和槽函数
         exit_act.triggered.connect(qApp.quit)
@@ -475,7 +478,7 @@ class MainWindow(QMainWindow):
         scale_act.triggered.connect(self.scale_action)
         clip_cohen_sutherland_act.triggered.connect(self.clip_cohen_sutherland_action)
         clip_liang_barsky_act.triggered.connect(self.clip_liang_barsky_action)
-        choose_item.triggered.connect(self.choose_item_action)
+        select_item.triggered.connect(self.select_item_action)
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
 
         # 设置主窗口的布局
@@ -507,6 +510,17 @@ class MainWindow(QMainWindow):
         setbar.addWidget(self.bspline_box)
         self.bezier_box.valueChanged.connect(self.set_bezier_num)
         self.bspline_box.valueChanged.connect(self.set_bspline_num)
+
+        self.w=600
+        self.h=600
+        self.scene = QGraphicsScene(self)
+        self.scene.setSceneRect(0, 0, self.w, self.h)
+        self.canvas_widget.resize(self.w,self.h)
+        self.canvas_widget.setFixedSize(self.w, self.h)
+        self.statusBar().showMessage('空闲')
+        self.setMaximumHeight(self.h)
+        self.setMaximumWidth(self.w)
+        self.resize(self.w, self.h)
 
     def get_id(self):
         _id = str(self.item_cnt)
@@ -578,10 +592,9 @@ class MainWindow(QMainWindow):
             if(box1.value()<100 or box1.value()>1000 or box2.value()<100 or box2.value()>1000):
                 QMessageBox.about(self, "提示", "修改失败,请保证输入的数字大于等于100小于等于1000")
             else:
-                temp1=self.w-box1.value()
-                temp2=self.h-box2.value()
                 self.w = box1.value()
                 self.h = box2.value()
+            self.scene = QGraphicsScene(self)
             self.scene.setSceneRect(0, 0, self.w, self.h)
             self.canvas_widget.resize(self.w,self.h)
             self.canvas_widget.setFixedSize(self.w, self.h)
@@ -702,8 +715,8 @@ class MainWindow(QMainWindow):
         self.canvas_widget.start_clip('Liang-Barsky')
         self.statusBar().showMessage('裁剪')
 
-    def choose_item_action(self):
-        self.canvas_widget.start_choose()
+    def select_item_action(self):
+        self.canvas_widget.start_select()
         self.statusBar().showMessage('选择图元')
 
 
