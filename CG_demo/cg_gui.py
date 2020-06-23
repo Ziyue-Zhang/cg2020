@@ -80,6 +80,7 @@ class MyCanvas(QGraphicsView):
 
     def start_translate(self):
         if self.selected_id=='':
+            self.status = ''
             return
         self.status = 'translate'
         self.temp_item=self.item_dict[self.selected_id]
@@ -87,6 +88,7 @@ class MyCanvas(QGraphicsView):
 
     def start_rotate(self):
         if self.selected_id=='':
+            self.status = ''
             return
         if self.item_dict[self.selected_id].item_type == 'ellipse':
             self.status=''
@@ -98,6 +100,7 @@ class MyCanvas(QGraphicsView):
 
     def start_scale(self):
         if self.selected_id=='':
+            self.status = ''
             return
         self.status = 'scale'
         self.temp_item=self.item_dict[self.selected_id]
@@ -105,6 +108,7 @@ class MyCanvas(QGraphicsView):
 
     def start_clip(self, algorithm):
         if self.selected_id=='':
+            self.status = ''
             return
         if self.item_dict[self.selected_id].item_type != 'line':
             self.status=''
@@ -165,6 +169,9 @@ class MyCanvas(QGraphicsView):
             self.scene().addItem(self.temp_item)
         elif self.status == 'polygon':
             if(self.temp_item == None):
+                self.main_window.list_widget.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
                 self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], self.temp_algorithm, self.main_window.col)
                 self.scene().addItem(self.temp_item)
             else:
@@ -173,6 +180,9 @@ class MyCanvas(QGraphicsView):
                     self.temp_item.finish_draw=True
                     self.item_dict[self.temp_id] = self.temp_item
                     self.list_widget.addItem(self.temp_id)
+                    self.main_window.list_widget.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
                     self.finish_draw()
                 else:
                     self.temp_item.p_list.append([x,y])
@@ -435,13 +445,13 @@ class MainWindow(QMainWindow):
         self.canvas_widget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff) 
 
         # 设置菜单栏
-        menubar = self.menuBar()
-        file_menu = menubar.addMenu('文件')
+        self.menubar = self.menuBar()
+        file_menu = self.menubar.addMenu('文件')
         set_pen_act = file_menu.addAction('设置画笔')
         reset_canvas_act = file_menu.addAction('重置画布')
         save_canvas_act = file_menu.addAction('保存画布')
         exit_act = file_menu.addAction('退出')
-        draw_menu = menubar.addMenu('绘制')
+        draw_menu = self.menubar.addMenu('绘制')
         line_menu = draw_menu.addMenu('线段')
         line_naive_act = line_menu.addAction('Naive')
         line_dda_act = line_menu.addAction('DDA')
@@ -453,7 +463,7 @@ class MainWindow(QMainWindow):
         curve_menu = draw_menu.addMenu('曲线')
         curve_bezier_act = curve_menu.addAction('Bezier')
         curve_b_spline_act = curve_menu.addAction('B-spline')
-        edit_menu = menubar.addMenu('编辑')
+        edit_menu = self.menubar.addMenu('编辑')
         translate_act = edit_menu.addAction('平移')
         rotate_act = edit_menu.addAction('旋转')
         scale_act = edit_menu.addAction('缩放')
@@ -494,22 +504,22 @@ class MainWindow(QMainWindow):
         self.resize(self.w, self.h)
         self.setWindowTitle('CG Demo')
 
-        setbar=QToolBar()
-        self.addToolBar(Qt.LeftToolBarArea,setbar)
+        self.setbar=QToolBar()
+        self.addToolBar(Qt.LeftToolBarArea,self.setbar)
  
         self.bezier_box = QSpinBox()
         self.bezier_box.setRange(3, 20)
         self.bezier_box.setSingleStep(1)
         self.bezier_box.setValue(self.bezier_num)
-        setbar.addWidget(QLabel("Bezier控制点数"))
-        setbar.addWidget(self.bezier_box)
-        setbar.addSeparator()
+        self.setbar.addWidget(QLabel("Bezier控制点数"))
+        self.setbar.addWidget(self.bezier_box)
+        self.setbar.addSeparator()
         self.bspline_box = QSpinBox()
         self.bspline_box.setRange(4, 20)
         self.bspline_box.setSingleStep(1)
         self.bspline_box.setValue(self.bspline_num)
-        setbar.addWidget(QLabel("B样条阶数"))
-        setbar.addWidget(self.bspline_box)
+        self.setbar.addWidget(QLabel("B样条阶数"))
+        self.setbar.addWidget(self.bspline_box)
         self.bezier_box.valueChanged.connect(self.set_bezier_num)
         self.bspline_box.valueChanged.connect(self.set_bspline_num)
 
