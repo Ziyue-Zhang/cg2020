@@ -150,6 +150,21 @@ class MyCanvas(QGraphicsView):
         self.status=''
         self.temp_item = None
         self.main_window.remove_id()
+
+    def start_clip_polygon(self):
+        if self.selected_id=='':
+            self.status = ''
+            return
+        if self.item_dict[self.selected_id].item_type != 'polygon':
+            self.status=''
+            return
+        self.status = 'polygon_clip'
+        self.temp_item=self.item_dict[self.selected_id]
+        self.plist=self.temp_item.p_list
+
+    def start_fill_polygon(self):
+        return
+    
         
 
     def finish_draw(self):
@@ -233,7 +248,7 @@ class MyCanvas(QGraphicsView):
                 self.status=''
         elif self.status == 'scale':
             self.start_xy=[x,y]
-        elif self.status == 'clip':
+        elif self.status == 'clip' or self.status == 'polygon_clip':
             self.start_xy=[x,y]
         elif self.status == 'select':
             selected=self.scene().itemAt(pos,QtGui.QTransform())
@@ -253,8 +268,7 @@ class MyCanvas(QGraphicsView):
                 super().mousePressEvent(event)
                 return
             self.temp_item = MyItem(self.temp_id, self.copy_item.item_type, self.copy_item.p_list, self.copy_item.algorithm, self.main_window.col)
-            self.scene().addItem(self.temp_item)
-            self.setTransform(QtGui.QTransform())
+            self.temp_item.finish_draw=True
             num=0
             self.cpx=0
             self.cpy=0
@@ -265,6 +279,7 @@ class MyCanvas(QGraphicsView):
             self.cpx=int(self.cpx/num)
             self.cpy=int(self.cpy/num)
             self.temp_item.p_list=alg.translate(self.copy_item.p_list,x-self.cpx,y-self.cpy)
+            self.scene().addItem(self.temp_item)
             self.item_dict[self.temp_id] = self.temp_item
             self.list_widget.addItem(self.temp_id)
             self.finish_draw()
@@ -303,6 +318,8 @@ class MyCanvas(QGraphicsView):
             self.temp_item.p_list=alg.scale(self.plist,self.start_xy[0],self.start_xy[1],s)
         elif self.status == 'clip':
             self.temp_item.p_list=alg.clip(self.plist,self.start_xy[0],self.start_xy[1],x,y,self.temp_algorithm)
+        elif self.status == 'polygon_clip':
+            self.temp_item.p_list=alg.polygon_clip(self.plist,self.start_xy[0],self.start_xy[1],x,y)
         self.updateScene([self.sceneRect()])
         #self.prepareGeometryChange()
         super().mouseMoveEvent(event)
@@ -344,9 +361,8 @@ class MyCanvas(QGraphicsView):
             self.plist =self.temp_item.p_list
         elif self.status == 'rotate':
             self.plist =self.temp_item.p_list
-        elif self.status == 'clip':
+        elif self.status == 'clip' or self.status == 'polygon_clip':
             self.plist =self.temp_item.p_list    
-            self.status=''
         super().mouseReleaseEvent(event)
 
     def wheelEvent (self, event):
@@ -524,6 +540,8 @@ class MainWindow(QMainWindow):
         clip_liang_barsky_act = clip_menu.addAction('Liang-Barsky')
         extra_menu = self.menubar.addMenu('附加功能')
         select_item = extra_menu.addAction('选择图元')
+        fill_polygon = extra_menu.addAction('多边形填充')
+        clip_polygon = extra_menu.addAction('多边形裁剪')
         cancel_item = extra_menu.addAction('撤销')
         copy_item = extra_menu.addAction('复制')
         paste_item = extra_menu.addAction('粘贴')
@@ -547,6 +565,8 @@ class MainWindow(QMainWindow):
         clip_cohen_sutherland_act.triggered.connect(self.clip_cohen_sutherland_action)
         clip_liang_barsky_act.triggered.connect(self.clip_liang_barsky_action)
         select_item.triggered.connect(self.select_item_action)
+        fill_polygon.triggered.connect(self.polygon_fill_action)
+        clip_polygon.triggered.connect(self.polygon_clip_action)
         cancel_item.triggered.connect(self.cancel_item_action)
         copy_item.triggered.connect(self.copy_item_action)
         paste_item.triggered.connect(self.paste_item_action)
@@ -809,6 +829,18 @@ class MainWindow(QMainWindow):
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
         self.canvas_widget.start_cancel(self.item_cnt)
+
+    def polygon_clip_action(self):
+        self.canvas_widget.start_clip_polygon()
+        self.statusBar().showMessage('多边形裁剪')
+
+    def polygon_fill_action(self):
+        if(self.item_cnt>0):
+            self.item_cnt-=1
+        self.canvas_widget.start_draw_polygon( self.get_id())
+        self.statusBar().showMessage('多边形填充')
+        self.list_widget.clearSelection()
+        self.canvas_widget.clear_selection()
 
 
 if __name__ == '__main__':

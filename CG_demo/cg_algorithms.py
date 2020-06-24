@@ -434,3 +434,83 @@ def clip(p_list, x_min, y_min, x_max, y_max, algorithm):
             result=[[0,0],[0,0]]     
         
     return result
+
+def polygon_clip(p_list, x_min, y_min, x_max, y_max):
+
+    result = []
+    if(x_min==x_max or y_min==y_max):
+        result=[[0,0],[0,0]]
+        return result
+
+    if x_min > x_max:
+        x_min, x_max = x_max, x_min
+    if y_min > y_max:
+        y_min, y_max = y_max, y_min
+
+   
+    tmp = p_list
+    n = len(tmp)
+    for j in range(0,len(tmp)):
+        if (tmp[j][0] < x_min and tmp[(j + 1) % n][0] >= x_min):
+            y = (float)(tmp[(j+1)%n][1] - tmp[j][1])/(tmp[(j+1)%n][0] - tmp[j][0])*(x_min-tmp[j][0])+tmp[j][1]
+            y=int(y)
+            result.append([x_min, y])
+            result.append(tmp[(j + 1)%n])
+        elif (tmp[j][0] >= x_min and tmp[(j+1)%n][0] >= x_min):
+            result.append(tmp[(j+1)%n])
+        elif (tmp[j][0] >= x_min and tmp[(j + 1)%n][0] < x_min):
+            y = (float)(tmp[(j+1)%n][1] - tmp[j][1])/(tmp[(j+1)%n][0] - tmp[j][0])*(x_min-tmp[j][0])+tmp[j][1]
+            y=int(y)
+            result.append([x_min, y])
+
+    tmp=result
+    n = len(tmp)
+    result=[]
+    for j in range(0,len(tmp)):
+        if (tmp[j][1] < y_min and tmp[(j + 1) % n][1] >= y_min):
+            x = (float)(tmp[(j+1)%n][0] - tmp[j][0])/(tmp[(j+1)%n][1] - tmp[j][1])*(y_min-tmp[j][1])+tmp[j][0]
+            x=int(x)
+            result.append([x, y_min])
+            result.append(tmp[(j + 1)%n])
+        elif (tmp[j][1] >= y_min and tmp[(j+1)%n][1] >= y_min):
+            result.append(tmp[(j+1)%n])
+        elif (tmp[j][1] >= y_min and tmp[(j + 1)%n][1] < y_min):
+            x = (float)(tmp[(j+1)%n][0] - tmp[j][0])/(tmp[(j+1)%n][1] - tmp[j][1])*(y_min-tmp[j][1])+tmp[j][0]
+            x=int(x)
+            result.append([x, y_min])
+
+    tmp=result
+    n = len(tmp)
+    result=[]
+    for j in range(0,len(tmp)):
+        if (tmp[j][0] > x_max and tmp[(j + 1) % n][0] <= x_max):
+            y = (float)(tmp[(j+1)%n][1] - tmp[j][1])/(tmp[(j+1)%n][0] - tmp[j][0])*(x_max-tmp[j][0])+tmp[j][1]
+            y=int(y)
+            result.append([x_max, y])
+            result.append(tmp[(j + 1)%n])
+        elif (tmp[j][0] <= x_max and tmp[(j+1)%n][0] <= x_max):
+            result.append(tmp[(j+1)%n])
+        elif (tmp[j][0] <= x_max and tmp[(j + 1)%n][0] > x_max):
+            y = (float)(tmp[(j+1)%n][1] - tmp[j][1])/(tmp[(j+1)%n][0] - tmp[j][0])*(x_max-tmp[j][0])+tmp[j][1]
+            y=int(y)
+            result.append([x_max, y])
+
+    tmp=result
+    n = len(tmp)
+    result=[]
+    for j in range(0,len(tmp)):
+        if (tmp[j][1] > y_max and tmp[(j + 1) % n][1] <= y_max):
+            x = (float)(tmp[(j+1)%n][0] - tmp[j][0])/(tmp[(j+1)%n][1] - tmp[j][1])*(y_max-tmp[j][1])+tmp[j][0]
+            x=int(x)
+            result.append([x, y_max])
+            result.append(tmp[(j + 1)%n])
+        elif (tmp[j][1] <= y_max and tmp[(j+1)%n][1] <= y_max):
+            result.append(tmp[(j+1)%n])
+        elif (tmp[j][1] <= y_max and tmp[(j + 1)%n][1] > y_max):
+            x = (float)(tmp[(j+1)%n][0] - tmp[j][0])/(tmp[(j+1)%n][1] - tmp[j][1])*(y_max-tmp[j][1])+tmp[j][0]
+            x=int(x)
+            result.append([x, y_max])
+
+    if(len(result)==0):
+        result=[[0,0],[0,0]]
+    return result
