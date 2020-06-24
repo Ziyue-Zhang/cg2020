@@ -47,9 +47,12 @@ class MyCanvas(QGraphicsView):
         self.temp_algorithm = ''
         self.temp_id = ''
         self.temp_item = None
+        self.copy_item = None
         self.dot_num=0
         self.start_xy=None
         self.plist=None
+        self.cpx=0
+        self.cpy=0
         self.angel=0
         self.offset_x=0
         self.offset_y=0
@@ -120,6 +123,34 @@ class MyCanvas(QGraphicsView):
 
     def start_select(self):
         self.status = 'select'
+
+    def start_copy(self):
+        if self.selected_id=='':
+            self.status = ''
+            return
+        self.status = 'copy'
+        self.copy_item=self.item_dict[self.selected_id]
+
+    def start_paste(self):
+        if self.selected_id=='':
+            self.status = ''
+            return
+        self.status = 'paste'
+
+    def start_cancel(self, item_id):
+        if(item_id<=1):
+            return
+        item_id-=2
+        self.scene().removeItem(self.item_dict[str(item_id)])
+        del self.item_dict[str(item_id)]
+        item = self.list_widget.takeItem(item_id)
+        self.list_widget.removeItemWidget(item)
+        self.updateScene([self.sceneRect()])
+        self.selected_id=''
+        self.status=''
+        self.temp_item = None
+        self.main_window.remove_id()
+        
 
     def finish_draw(self):
         self.temp_id = self.main_window.get_id()
@@ -216,6 +247,27 @@ class MyCanvas(QGraphicsView):
                     self.item_dict[item].selected = True
                     self.item_dict[item].update()
                     self.main_window.list_widget.setCurrentRow(int(item))
+        elif self.status == 'paste':
+            if(self.copy_item==None):
+                self.updateScene([self.sceneRect()])
+                super().mousePressEvent(event)
+                return
+            self.temp_item = MyItem(self.temp_id, self.copy_item.item_type, self.copy_item.p_list, self.copy_item.algorithm, self.main_window.col)
+            self.scene().addItem(self.temp_item)
+            self.setTransform(QtGui.QTransform())
+            num=0
+            self.cpx=0
+            self.cpy=0
+            for xx,yy in self.copy_item.p_list:
+                self.cpx+=xx
+                self.cpy+=yy
+                num+=1
+            self.cpx=int(self.cpx/num)
+            self.cpy=int(self.cpy/num)
+            self.temp_item.p_list=alg.translate(self.copy_item.p_list,x-self.cpx,y-self.cpy)
+            self.item_dict[self.temp_id] = self.temp_item
+            self.list_widget.addItem(self.temp_id)
+            self.finish_draw()
 
         self.updateScene([self.sceneRect()])
         super().mousePressEvent(event)
@@ -470,7 +522,11 @@ class MainWindow(QMainWindow):
         clip_menu = edit_menu.addMenu('裁剪')
         clip_cohen_sutherland_act = clip_menu.addAction('Cohen-Sutherland')
         clip_liang_barsky_act = clip_menu.addAction('Liang-Barsky')
-        select_item = edit_menu.addAction('选择图元')
+        extra_menu = self.menubar.addMenu('附加功能')
+        select_item = extra_menu.addAction('选择图元')
+        cancel_item = extra_menu.addAction('撤销')
+        copy_item = extra_menu.addAction('复制')
+        paste_item = extra_menu.addAction('粘贴')
 
         # 连接信号和槽函数
         exit_act.triggered.connect(qApp.quit)
@@ -491,6 +547,9 @@ class MainWindow(QMainWindow):
         clip_cohen_sutherland_act.triggered.connect(self.clip_cohen_sutherland_action)
         clip_liang_barsky_act.triggered.connect(self.clip_liang_barsky_action)
         select_item.triggered.connect(self.select_item_action)
+        cancel_item.triggered.connect(self.cancel_item_action)
+        copy_item.triggered.connect(self.copy_item_action)
+        paste_item.triggered.connect(self.paste_item_action)
         self.list_widget.currentTextChanged.connect(self.canvas_widget.selection_changed)
 
         # 设置主窗口的布局
@@ -538,6 +597,10 @@ class MainWindow(QMainWindow):
         _id = str(self.item_cnt)
         self.item_cnt += 1
         return _id
+
+    def remove_id(self):
+        if(self.item_cnt>0):
+            self.item_cnt -= 1
 
     def set_bezier_num(self):
         self.bezier_num=self.bezier_box.value()
@@ -730,7 +793,22 @@ class MainWindow(QMainWindow):
     def select_item_action(self):
         self.canvas_widget.start_select()
         self.statusBar().showMessage('选择图元')
+    
+    def copy_item_action(self):
+        self.canvas_widget.start_copy()
+        self.statusBar().showMessage('复制')
 
+    def paste_item_action(self):
+        self.canvas_widget.start_paste()
+        self.statusBar().showMessage('粘贴')
+        self.list_widget.clearSelection()
+        self.canvas_widget.clear_selection()
+
+    def cancel_item_action(self):
+        self.statusBar().showMessage('撤销')
+        self.list_widget.clearSelection()
+        self.canvas_widget.clear_selection()
+        self.canvas_widget.start_cancel(self.item_cnt)
 
 
 if __name__ == '__main__':
