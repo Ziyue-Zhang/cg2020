@@ -61,21 +61,25 @@ class MyCanvas(QGraphicsView):
         self.status = 'line'
         self.temp_algorithm = algorithm
         self.temp_id = item_id
+        self.temp_item = None
 
     def start_draw_ellipse(self, item_id):
         self.status = 'ellipse'
         self.temp_id = item_id
+        self.temp_item = None
 
     def start_draw_polygon(self, algorithm, item_id):
         self.status = 'polygon'
         self.temp_algorithm = algorithm
         self.temp_id = item_id
+        self.temp_item = None
 
     def start_draw_curve(self, algorithm, item_id, dot_num):
         self.status = 'curve'
         self.temp_algorithm = algorithm
         self.temp_id = item_id
         self.dot_num = dot_num
+        self.temp_item = None
 
     def set_dot_num(self, algorithm, dot_num):
         if(self.temp_algorithm == algorithm):
@@ -155,17 +159,17 @@ class MyCanvas(QGraphicsView):
         if self.selected_id=='':
             self.status = ''
             return
-        if self.item_dict[self.selected_id].item_type != 'polygon':
+        if self.item_dict[self.selected_id].item_type != 'polygon' and self.item_dict[self.selected_id].item_type != 'fill_polygon':
             self.status=''
             return
         self.status = 'polygon_clip'
         self.temp_item=self.item_dict[self.selected_id]
         self.plist=self.temp_item.p_list
 
-    def start_fill_polygon(self):
-        return
-    
-        
+    def start_fill_polygon(self, item_id):
+        self.status = 'fill_polygon'
+        self.temp_id = item_id
+        self.temp_item = None        
 
     def finish_draw(self):
         self.temp_id = self.main_window.get_id()
@@ -219,6 +223,25 @@ class MyCanvas(QGraphicsView):
                 self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
                 self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
                 self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], self.temp_algorithm, self.main_window.col)
+                self.scene().addItem(self.temp_item)
+            else:
+                x0,y0=self.temp_item.p_list[0]
+                if(((x0-x)**2+(y0-y)**2)<40 and len(self.temp_item.p_list)>=3):
+                    self.temp_item.finish_draw=True
+                    self.item_dict[self.temp_id] = self.temp_item
+                    self.list_widget.addItem(self.temp_id)
+                    self.main_window.list_widget.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.finish_draw()
+                else:
+                    self.temp_item.p_list.append([x,y])
+        elif self.status == 'fill_polygon':
+            if(self.temp_item == None):
+                self.main_window.list_widget.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], 'Bresenham', self.main_window.col)
                 self.scene().addItem(self.temp_item)
             else:
                 x0,y0=self.temp_item.p_list[0]
@@ -306,6 +329,11 @@ class MyCanvas(QGraphicsView):
                 pass
             else:
                 self.temp_item.p_list[-1] = [x, y]
+        elif self.status == 'fill_polygon':
+            if (self.temp_item == None):
+                pass
+            else:
+                self.temp_item.p_list[-1] = [x, y]
         elif self.status == 'curve':
             if (self.temp_item == None):
                 pass
@@ -334,6 +362,15 @@ class MyCanvas(QGraphicsView):
             self.list_widget.addItem(self.temp_id)
             self.finish_draw()
         elif self.status == 'polygon':
+            if (self.temp_item == None):
+                pass
+            else:
+                pos = self.mapToScene(event.localPos().toPoint())
+                x = int(pos.x())
+                y = int(pos.y())
+                self.temp_item.p_list[-1] = [x, y]
+                self.updateScene([self.sceneRect()])
+        elif self.status == 'fill_polygon':
             if (self.temp_item == None):
                 pass
             else:
@@ -419,6 +456,17 @@ class MyItem(QGraphicsItem):
             if self.selected:
                 painter.setPen(QColor(255, 0, 0))
                 painter.drawRect(self.boundingRect())
+        elif self.item_type == 'fill_polygon':
+            if(self.finish_draw==True):
+                item_pixels = alg.fill(self.p_list)
+            else:
+                item_pixels = alg.draw_part_polygon(self.p_list, self.algorithm)
+            for p in item_pixels:
+                painter.setPen(self.col)
+                painter.drawPoint(*p)
+            if self.selected:
+                painter.setPen(QColor(255, 0, 0))
+                painter.drawRect(self.boundingRect())
         elif self.item_type == 'ellipse':
             item_pixels = alg.draw_ellipse(self.p_list)
             for p in item_pixels:
@@ -440,7 +488,7 @@ class MyItem(QGraphicsItem):
                 painter.drawRect(self.boundingRect())
 
     def boundingRect(self) -> QRectF:
-        if self.item_type == 'line':
+        if self.item_type == 'line' or self.item_type == 'ellipse':
             x0, y0 = self.p_list[0]
             x1, y1 = self.p_list[1]
             x = min(x0, x1)
@@ -448,7 +496,7 @@ class MyItem(QGraphicsItem):
             w = max(x0, x1) - x
             h = max(y0, y1) - y
             return QRectF(x - 1, y - 1, w + 2, h + 2)
-        elif self.item_type == 'polygon':
+        elif self.item_type == 'polygon' or self.item_type == 'curve' or self.item_type == 'fill_polygon':
             x, y = self.p_list[0]
             x0, y0 = x, y
             x1, y1 = x, y
@@ -461,28 +509,6 @@ class MyItem(QGraphicsItem):
             w = x1 - x0
             h = y1 - y0
             return QRectF(x0 - 1, y0 - 1, w + 2, h + 2)
-        elif self.item_type == 'ellipse':
-            x0, y0 = self.p_list[0]
-            x1, y1 = self.p_list[1]
-            x = min(x0, x1)
-            y = min(y0, y1)
-            w = max(x0, x1) - x
-            h = max(y0, y1) - y
-            return QRectF(x - 1, y - 1, w + 2, h + 2)
-        elif self.item_type == 'curve':
-            x, y = self.p_list[0]
-            x0, y0 = x, y
-            x1, y1 = x, y
-            for i in range(1,len(self.p_list)):
-                x, y = self.p_list[i]
-                x0 = min(x0, x)
-                y0 = min(y0, y)
-                x1 = max(x1, x)
-                y1 = max(y1, y)
-            w = x1 - x0
-            h = y1 - y0
-            return QRectF(x0 - 1, y0 - 1, w + 2, h + 2)
-
 
 class MainWindow(QMainWindow):
     """
@@ -837,7 +863,7 @@ class MainWindow(QMainWindow):
     def polygon_fill_action(self):
         if(self.item_cnt>0):
             self.item_cnt-=1
-        self.canvas_widget.start_draw_polygon( self.get_id())
+        self.canvas_widget.start_fill_polygon(self.get_id())
         self.statusBar().showMessage('多边形填充')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
