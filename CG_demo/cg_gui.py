@@ -177,10 +177,10 @@ class MyCanvas(QGraphicsView):
             self.selected_id = ''
         
     def clear_canvas(self):
-        if(self.temp_item==None or self.status=='' or self.status=='translate' or self.status=='rotate' or self.status=='scale' or self.status=='clip'):
+        '''if(self.temp_item==None or self.status=='' or self.status=='translate' or self.status=='rotate' or self.status=='scale' or self.status=='clip'):
             pass
         else:
-            self.scene().removeItem(self.temp_item)
+            self.scene().removeItem(self.temp_item)'''
         for item in self.item_dict:
             self.scene().removeItem(self.item_dict[item])
         self.updateScene([self.sceneRect()])
