@@ -183,7 +183,7 @@ def draw_curve(p_list, algorithm):
     result = []
     control_point = []
     if algorithm == 'Bezier':
-        m=len(p_list)*1000
+        m=len(p_list)*2000
         for i in range(0, m):
             control_point=p_list.copy()
             t = float(i/m)
@@ -515,27 +515,12 @@ def polygon_clip(p_list, x_min, y_min, x_max, y_max):
         result=[[0,0],[0,0]]
     return result
 
-    def polygon_fill(p_list):
-        return
-
 class Node:
-    def __init__(self, x = 0, dx = 0.0, y_max = 0, next = None):
+    def __init__(self, x = 0, dx = 0.0, y_max = 0, nxt = None):
         self.x = x
         self.dx = dx
         self.y_max = y_max
-        self.next = next
-
-    def get_x(self):
-        return self.x
-
-    def get_dx(self):
-        return self.dx
-
-    def get_ymax(self):
-        return self.y_max
-
-    def get_next(self):
-        return self.next
+        self.next = nxt
 
     def set_x(self, x):
         self.x = x
@@ -543,25 +528,22 @@ class Node:
     def set_next(self, nxt):
         self.next = nxt
     
-def fill(p_list):
-    """fill polygon
-    
-    : param p_list (list of list of int: [[x0, y0], [x1, y1], [x2, y2], ...]) 多边形的顶点坐标列表
-    :return: (list of list of int: [[x_0, y_0], [x_1, y_1], [x_2, y_2], ...]) 绘制结果的像素点坐标列表
-    """
+def polygon_fill(p_list):
+
     result = []
     n = len(p_list)
     y_max = 0
     y_min = 10000
     for i in range(n):
         x0, y0 = p_list[i]
-        if y0 < y_min:
-            y_min = y0
         if y0 > y_max:
             y_max = y0
+        if y0 < y_min:
+            y_min = y0
 
-    AET = Node()
     NET = []
+    AET = Node()
+
     for i in range(0, y_max + 1):
         node = Node()
         NET.append(node)
@@ -572,62 +554,60 @@ def fill(p_list):
                 x0, y0 = p_list[j]
                 x1, y1 = p_list[(j - 1 + n) % n]
                 if y1 > y0:
-                    node = Node(x0,float((x1-x0)/(y1-y0)),y1,NET[i].get_next())
+                    node = Node(x0,float((x1-x0)/(y1-y0)),y1,NET[i].next)
                     NET[i].set_next(node)
                 x1, y1 = p_list[(j + 1 + n) % n]
                 if y1 > y0:
-                    node = Node(x0,float((x1-x0)/(y1-y0)),y1,NET[i].get_next())
+                    node = Node(x0,float((x1-x0)/(y1-y0)),y1,NET[i].next)
                     NET[i].set_next(node)
    
     for i in range(y_min, y_max + 1):
 
-        node1 = NET[i].get_next()
+        node1 = NET[i].next
         node2 = AET
         while node1 != None:
-            while node2.get_next() != None and node1.get_x() >= node2.get_next().get_x():
-                node2 = node2.get_next()
-            temp = node1.get_next()
-            node1.set_next(node2.get_next())
+            while node2.next != None and node1.x >= node2.next.x:
+                node2 = node2.next
+            temp = node1.next
+            node1.set_next(node2.next)
             node2.set_next(node1)          
             node1 = temp
             node2 = AET
 
         node1 = AET
-        node2 = node1.get_next()
+        node2 = node1.next
         while node2 != None:
-            if node2.get_ymax() == i:
-                node1.set_next(node2.get_next())
-                node2 = node1.get_next()
+            if node2.y_max == i:
+                node1.set_next(node2.next)
+                node2 = node1.next
             else:
-                node1 = node1.get_next()
-                node2 = node2.get_next()
+                node1 = node1.next
+                node2 = node2.next
 
-        node = AET.get_next()
+        node = AET.next
 
         while node != None:
-            node.set_x(node.get_x() + node.get_dx())
-            node = node.get_next()
+            node.set_x(node.x + node.dx)
+            node = node.next
         
         node1 = AET
-        node2 = AET.get_next()
+        node2 = AET.next
         node1.set_next(None)
         while node2 != None:
-            while node1.get_next() != None and node2.get_x() >= node1.get_next().get_x():
-                node1 = node1.get_next()
-            temp = node2.get_next()
-            node2.set_next(node1.get_next())
+            while node1.next != None and node2.x >= node1.next.x:
+                node1 = node1.next
+            temp = node2.next
+            node2.set_next(node1.next)
             node1.set_next(node2)
             node2 = temp
             node1 = AET
             
-        node = AET.get_next()
-        while node != None and node.get_next() != None:
-            x = node.get_x()
-            while x <= node.get_next().get_x():
-                result.append((int(x), i))
+        node = AET.next
+        while node != None and node.next != None:
+            x = int(node.x)
+            while x <= node.next.x:
+                result.append([x, i])
                 x = x + 1
-            node = node.get_next().get_next()
+            node = node.next.next
     
-    return result
-
-    
+    return result    

@@ -32,6 +32,13 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtGui as QtGui
 
 
+class Operate():
+    def __init__(self, status, item, p_list):
+        self.status = x
+        self.dx = dx
+        self.y_max = y_max
+        self.next = next
+
 class MyCanvas(QGraphicsView):
     """
     画布窗体类，继承自QGraphicsView，采用QGraphicsView、QGraphicsScene、QGraphicsItem的绘图框架
@@ -48,6 +55,7 @@ class MyCanvas(QGraphicsView):
         self.temp_id = ''
         self.temp_item = None
         self.copy_item = None
+        self.copy_id=''
         self.dot_num=0
         self.start_xy=None
         self.plist=None
@@ -56,6 +64,8 @@ class MyCanvas(QGraphicsView):
         self.angel=0
         self.offset_x=0
         self.offset_y=0
+        self.undo_num=0
+        self.undo_save=[]
 
     def start_draw_line(self, algorithm, item_id):
         self.status = 'line'
@@ -133,10 +143,11 @@ class MyCanvas(QGraphicsView):
             self.status = ''
             return
         self.status = 'copy'
+        self.copy_id=self.selected_id
         self.copy_item=self.item_dict[self.selected_id]
 
     def start_paste(self):
-        if self.selected_id=='':
+        if self.copy_id=='':
             self.status = ''
             return
         self.status = 'paste'
@@ -154,6 +165,46 @@ class MyCanvas(QGraphicsView):
         self.status=''
         self.temp_item = None
         self.main_window.remove_id()
+
+    def save(self):
+        self.undo_num += 1
+        temp = []
+        for i in self.item_dict:
+            tmp=self.item_dict[i]
+            copy=MyItem(i, tmp.item_type, tmp.p_list, tmp.algorithm, self.main_window.col)
+            copy.finish_draw=True
+            temp.append(copy)
+        self.undo_save.append(temp)
+            
+    def start_undo(self):
+        while(len(self.item_dict)>0):
+            for i in self.item_dict:
+                self.scene().removeItem(self.item_dict[i])
+                del self.item_dict[i]
+                break
+        self.updateScene([self.sceneRect()])
+        self.list_widget.clear()
+        self.undo_num -= 1
+        if(self.undo_num==0):
+            self.main_window.item_cnt=0
+            self.undo_save=[]
+            return
+        if(self.undo_num<0):
+            self.undo_num=0
+            self.undo_save=[]
+            return
+        save_item = self.undo_save[self.undo_num-1]
+        self.undo_save.pop()
+        self.item_dict = {}
+        ii=0
+        for i in save_item:
+            self.scene().addItem(i)
+            self.list_widget.addItem(i.id)
+            self.item_dict[i.id] = i
+            ii+=1
+        if(ii>0):
+            self.main_window.item_cnt=ii+1
+        self.updateScene([self.sceneRect()])
 
     def start_clip_polygon(self):
         if self.selected_id=='':
@@ -234,6 +285,7 @@ class MyCanvas(QGraphicsView):
                     self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
                     self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
                     self.finish_draw()
+                    self.save()
                 else:
                     self.temp_item.p_list.append([x,y])
         elif self.status == 'fill_polygon':
@@ -253,12 +305,16 @@ class MyCanvas(QGraphicsView):
                     self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
                     self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
                     self.finish_draw()
+                    self.save()
                 else:
                     self.temp_item.p_list.append([x,y])
         elif self.status == 'curve':
             if(self.temp_item == None):
                 self.temp_item = MyItem(self.temp_id, self.status, [[x, y], [x, y]], self.temp_algorithm, self.main_window.col)
                 self.scene().addItem(self.temp_item)
+                self.main_window.list_widget.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
+                self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,True)
             else:
                 self.temp_item.p_list.append([x,y])
         elif self.status == 'translate':
@@ -286,10 +342,11 @@ class MyCanvas(QGraphicsView):
                     self.item_dict[item].update()
                     self.main_window.list_widget.setCurrentRow(int(item))
         elif self.status == 'paste':
-            if(self.copy_item==None):
+            if(self.copy_id==''):
                 self.updateScene([self.sceneRect()])
                 super().mousePressEvent(event)
                 return
+            self.copy_item=self.item_dict[self.copy_id]
             self.temp_item = MyItem(self.temp_id, self.copy_item.item_type, self.copy_item.p_list, self.copy_item.algorithm, self.main_window.col)
             self.temp_item.finish_draw=True
             num=0
@@ -306,6 +363,7 @@ class MyCanvas(QGraphicsView):
             self.item_dict[self.temp_id] = self.temp_item
             self.list_widget.addItem(self.temp_id)
             self.finish_draw()
+            self.save()
 
         self.updateScene([self.sceneRect()])
         super().mousePressEvent(event)
@@ -357,10 +415,12 @@ class MyCanvas(QGraphicsView):
             self.item_dict[self.temp_id] = self.temp_item
             self.list_widget.addItem(self.temp_id)
             self.finish_draw()
+            self.save()
         elif self.status == 'ellipse':
             self.item_dict[self.temp_id] = self.temp_item
             self.list_widget.addItem(self.temp_id)
             self.finish_draw()
+            self.save()
         elif self.status == 'polygon':
             if (self.temp_item == None):
                 pass
@@ -392,14 +452,22 @@ class MyCanvas(QGraphicsView):
                     self.item_dict[self.temp_id] = self.temp_item
                     self.list_widget.addItem(self.temp_id)
                     self.finish_draw()
+                    self.save()
+                    self.main_window.list_widget.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.main_window.menubar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
+                    self.main_window.setbar.setAttribute(Qt.WA_TransparentForMouseEvents,False)
         elif self.status == 'translate':
             self.plist =self.temp_item.p_list
+            self.save()
         elif self.status == 'scale':
             self.plist =self.temp_item.p_list
+            self.save()
         elif self.status == 'rotate':
             self.plist =self.temp_item.p_list
+            self.save()
         elif self.status == 'clip' or self.status == 'polygon_clip':
-            self.plist =self.temp_item.p_list    
+            self.plist =self.temp_item.p_list
+            self.save()    
         super().mouseReleaseEvent(event)
 
     def wheelEvent (self, event):
@@ -458,7 +526,7 @@ class MyItem(QGraphicsItem):
                 painter.drawRect(self.boundingRect())
         elif self.item_type == 'fill_polygon':
             if(self.finish_draw==True):
-                item_pixels = alg.fill(self.p_list)
+                item_pixels = alg.polygon_fill(self.p_list)
             else:
                 item_pixels = alg.draw_part_polygon(self.p_list, self.algorithm)
             for p in item_pixels:
@@ -666,11 +734,7 @@ class MainWindow(QMainWindow):
 
     def reset_canvas_action(self):
         self.item_cnt=0
-        self.canvas_widget.clear_canvas()
         self.statusBar().showMessage('重置画布')
-        self.list_widget.clearSelection()
-        self.canvas_widget.clear_selection()
-        self.list_widget.clear()
         
         dialog = QDialog()
         dialog.setWindowTitle('重置画布')
@@ -715,6 +779,10 @@ class MainWindow(QMainWindow):
             else:
                 self.w = box1.value()
                 self.h = box2.value()
+            self.canvas_widget.clear_canvas()
+            self.list_widget.clearSelection()
+            self.canvas_widget.clear_selection()
+            self.list_widget.clear()
             self.scene = QGraphicsScene(self)
             self.scene.setSceneRect(0, 0, self.w, self.h)
             self.canvas_widget.resize(self.w,self.h)
@@ -723,6 +791,8 @@ class MainWindow(QMainWindow):
             self.setMaximumHeight(self.h)
             self.setMaximumWidth(self.w)
             self.resize(self.w, self.h)
+            self.canvas_widget.undo_num=0
+            self.canvas_widget.undo_save=[]
     
     def save_canvas_action(self):
         self.list_widget.clearSelection()
@@ -854,7 +924,8 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage('撤销')
         self.list_widget.clearSelection()
         self.canvas_widget.clear_selection()
-        self.canvas_widget.start_cancel(self.item_cnt)
+        #self.canvas_widget.start_cancel(self.item_cnt)
+        self.canvas_widget.start_undo()
 
     def polygon_clip_action(self):
         self.canvas_widget.start_clip_polygon()
