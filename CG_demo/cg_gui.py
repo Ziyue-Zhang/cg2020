@@ -177,6 +177,7 @@ class MyCanvas(QGraphicsView):
         self.undo_save.append(temp)
             
     def start_undo(self):
+        #self.status = ''
         while(len(self.item_dict)>0):
             for i in self.item_dict:
                 self.scene().removeItem(self.item_dict[i])
@@ -188,10 +189,12 @@ class MyCanvas(QGraphicsView):
         if(self.undo_num==0):
             self.main_window.item_cnt=0
             self.undo_save=[]
+            self.temp_id = ''
             return
         if(self.undo_num<0):
             self.undo_num=0
             self.undo_save=[]
+            self.temp_id = ''
             return
         save_item = self.undo_save[self.undo_num-1]
         self.undo_save.pop()
@@ -204,6 +207,7 @@ class MyCanvas(QGraphicsView):
             ii+=1
         if(ii>0):
             self.main_window.item_cnt=ii+1
+            self.temp_id = str(ii)
         self.updateScene([self.sceneRect()])
 
     def start_clip_polygon(self):
