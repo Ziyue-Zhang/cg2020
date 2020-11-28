@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QToolBar,
     QStyleOptionGraphicsItem)
-from PyQt5.QtGui import QPainter, QMouseEvent, QColor
+from PyQt5.QtGui import QPainter, QMouseEvent, QColor, QPixmap
 from PyQt5.QtCore import QRectF, Qt
 import PyQt5.QtCore as QtCore
 import PyQt5.QtGui as QtGui
@@ -165,6 +165,16 @@ class MyCanvas(QGraphicsView):
         self.status=''
         self.temp_item = None
         self.main_window.remove_id()
+
+    def save_canvas(self, filename, w, h):
+        painter = QPainter()
+        pix = QPixmap(w, h)
+        pix.fill(QColor(255, 255, 255))
+        painter.begin(pix)
+        for item in self.item_dict:
+            self.item_dict[item].paint(painter,QStyleOptionGraphicsItem)
+        painter.end()
+        pix.save(filename)
 
     def save(self):
         self.undo_num += 1
@@ -700,8 +710,8 @@ class MainWindow(QMainWindow):
         self.bezier_box.valueChanged.connect(self.set_bezier_num)
         self.bspline_box.valueChanged.connect(self.set_bspline_num)
 
-        self.w=600
-        self.h=600
+        self.w=1000
+        self.h=1000
         self.scene = QGraphicsScene(self)
         self.scene.setSceneRect(0, 0, self.w, self.h)
         self.canvas_widget.resize(self.w,self.h)
@@ -805,8 +815,9 @@ class MainWindow(QMainWindow):
         dialog=QFileDialog()
         filename=dialog.getSaveFileName(filter="Image Files(*.jpg *.png *.bmp)")
         if filename[0]:
-            res=self.canvas_widget.grab(self.canvas_widget.sceneRect().toRect())
-            res.save(filename[0])
+            self.canvas_widget.save_canvas(filename[0], self.w, self.h)
+            #res=self.canvas_widget.grab(self.canvas_widget.sceneRect().toRect())
+            #res.save(filename[0])
 
     def line_naive_action(self):
         if(self.item_cnt>0):
